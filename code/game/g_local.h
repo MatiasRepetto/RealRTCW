@@ -173,7 +173,11 @@ typedef struct
 	char    *animatingParams;
 } g_script_status_t;
 //
-#define G_MAX_SCRIPT_ACCUM_BUFFERS  8
+#define G_MAX_SCRIPT_ACCUM_BUFFERS         8
+#define G_MAX_SCRIPT_GLOBAL_ACCUM_BUFFERS  8
+
+extern int g_scriptGlobalAccumBuffer[G_MAX_SCRIPT_GLOBAL_ACCUM_BUFFERS];
+
 //
 void G_Script_ScriptEvent( gentity_t *ent, char *eventStr, char *params );
 //====================================================================
@@ -617,6 +621,8 @@ struct gclient_s {
 	int saved_persistant[MAX_PERSISTANT];           // DHM - Nerve :: Save ps->persistant here during Limbo
 	
 	pmoveExt_t pmext;
+
+	int healthRegenStartTime;
 };
 
 
@@ -637,8 +643,6 @@ typedef struct {
 	int warmupTime;                 // restart match at this time
 
 	fileHandle_t logFile;
-
-	char mapname[MAX_QPATH];
 
 	// store latched cvars here that we want to get at often
 	int maxclients;
@@ -1113,6 +1117,7 @@ extern vmCvar_t g_reinforce;
 extern vmCvar_t g_fullarsenal;
 extern vmCvar_t g_endmapbonus;
 extern vmCvar_t g_randomweapons;
+extern vmCvar_t g_midgame;
 
 extern vmCvar_t g_reloading;        //----(SA)	added
 
@@ -1206,6 +1211,7 @@ extern vmCvar_t g_aicanheadshot;
 extern vmCvar_t g_realism;
 extern vmCvar_t g_regen;
 extern vmCvar_t	g_flushItems;
+extern vmCvar_t g_vanilla_plus;
 
 void	trap_Print( const char *text );
 void	trap_Error( const char *text ) __attribute__((noreturn));

@@ -81,6 +81,10 @@ If you have questions concerning this license or the applicable additional terms
 #define CROUCH_VIEWHEIGHT   16
 #define DEAD_VIEWHEIGHT     -16
 
+#define DEFAULT_RUN_SPEED_SCALE     0.8
+#define DEFAULT_SPRINT_SPEED_SCALE  1.2
+#define DEFAULT_CROUCH_SPEED_SCALE  0.25
+
 #define DEFAULT_MODEL       "bj2"
 #define DEFAULT_HEAD        "default"   
 
@@ -449,6 +453,7 @@ typedef enum {
 	HI_LP_SYRINGE,
 	HI_KNIVES,
 	HI_M97,
+	HI_AUTO5,
 	HI_NUM_HOLDABLE
 } holdable_t;
 
@@ -510,7 +515,8 @@ typedef enum {
 	WP_FG42,
 	WP_BAR,
 	// Shotguns
-	WP_M97, 
+	WP_M97,
+	WP_AUTO5, 
 	// Heavy Weapons
 	WP_BROWNING,
 	WP_MG42M,
@@ -527,14 +533,16 @@ typedef enum {
 	WP_POISONGAS,
 	// Misc Alt modes
 	WP_FG42SCOPE,   
-	WP_AKIMBO,     
-	WP_M7,      
-	// Currently inactive Gothicstein weapons                                 
+	WP_AKIMBO,
+	WP_DUAL_TT33,     
+	WP_M7,
+	WP_M1941SCOPE,
+
 	WP_P38,                 
 	WP_M30,                
 	WP_DELISLE,            
 	WP_DELISLESCOPE, 	   
-	WP_WELROD,             	
+	WP_HDM,             	
 	WP_HOLYCROSS,           
     // Misc stuff, not actual weapons
 	WP_DUMMY_MG42,
@@ -582,6 +590,12 @@ typedef struct ammoTable_s {
 	int upAngle;
 	float falloffDistance[2];
 	int mod;   
+	int shotgunReloadStart;
+	int shotgunReloadLoop;
+	int shotgunReloadEnd;
+	int shotgunPumpStart;
+	int shotgunPumpLoop;
+	int shotgunPumpEnd;
 } ammoTable_t;
 
 // Skill-based ammo parameters
@@ -597,21 +611,19 @@ extern ammoskill_t ammoSkill[GSKILL_NUM_SKILLS][WP_NUM_WEAPONS];
 #define GetWeaponTableData(weaponIndex) ((ammoTable_t *)(&ammoTable[weaponIndex]))
 
 
-#define IS_AUTORELOAD_WEAPON( weapon ) \
-	(	\
-		weapon == WP_LUGER    || weapon == WP_COLT          || weapon == WP_MP40          || \
-		weapon == WP_THOMPSON || weapon == WP_STEN      || \
-		weapon == WP_MAUSER    || weapon == WP_SNIPERRIFLE       || weapon == WP_M1GARAND  || \
-		weapon == WP_FG42     || weapon == WP_G43           || weapon == WP_MG42M   || \
-		weapon == WP_SILENCER    || weapon == WP_VENOM      || \
-		weapon == WP_GARAND   || weapon == WP_TT33     || weapon == WP_FG42SCOPE     || \
-		weapon == WP_BAR    || weapon == WP_MP44      || \
-		weapon == WP_M97   || weapon == WP_MP34     || weapon == WP_MOSIN     || \
-		weapon == WP_PPSH    || weapon == WP_GARAND      || \
-		weapon == WP_SNOOPERSCOPE  || weapon == WP_REVOLVER || weapon == WP_AKIMBO ||      \
-		weapon == WP_BROWNING || weapon == WP_P38 || weapon == WP_DELISLE ||  \
-        weapon == WP_DELISLESCOPE || weapon == WP_M1941 \
-	)
+// Define the auto-reload weapons
+static const int autoReloadWeapons[] = {
+    WP_GRENADE_LAUNCHER,
+	WP_GRENADE_PINEAPPLE,
+	WP_DYNAMITE,
+	WP_PANZERFAUST,
+	WP_TESLA,
+	WP_FLAMETHROWER,
+	WP_POISONGAS,
+	WP_AIRSTRIKE,
+	WP_KNIFE,
+	WP_M7,
+};
 
  // entityState_t->event values
 // entity events are for effects that take place reletive
@@ -801,6 +813,9 @@ typedef enum {
 	EV_SNIPER_SOUND,
 	EV_POPUP,
 	EV_POPUPBOOK,
+	EV_OBJECTIVE_MET,
+	EV_CHECKPOINT_PASSED,
+	EV_GAME_SAVED,
 	EV_GIVEPAGE,    
 	EV_CLOSEMENU,   
 	EV_SPAWN_SPIRIT,
@@ -808,7 +823,6 @@ typedef enum {
 	EV_THROWKNIFE,
 	EV_COUGH,
 	EV_QUICKGRENS,
-	EV_ALERT_SPEAKER,
 	EV_MAX_EVENTS   // just added as an 'endcap'
 } entity_event_t;
 
@@ -1098,7 +1112,8 @@ typedef enum {
 	MOD_GARAND,
 	MOD_SNOOPERSCOPE,
 	MOD_SILENCER,   
-	MOD_AKIMBO,     
+	MOD_AKIMBO,
+	MOD_DUAL_TT33,     
 	MOD_FG42,
 	MOD_FG42SCOPE,
 	MOD_PANZERFAUST,
@@ -1116,6 +1131,7 @@ typedef enum {
 	MOD_MOSIN,
 	MOD_G43,
 	MOD_M1941,
+	MOD_M1941SCOPE,
 	MOD_M1GARAND,
 	MOD_M7,
 	MOD_BAR,
@@ -1123,8 +1139,9 @@ typedef enum {
 	MOD_MG42M,
 	MOD_BROWNING,
 	MOD_M97,
+	MOD_AUTO5,
 	MOD_M30,
-	MOD_WELROD,
+	MOD_HDM,
 	MOD_REVOLVER,
 	MOD_GRENADE_PINEAPPLE,
 	MOD_CROSS,
@@ -1169,7 +1186,6 @@ typedef enum
 	WEAPON_CLASS_PISTOL,
 	WEAPON_CLASS_SMG,
 	WEAPON_CLASS_RIFLE,
-	WEAPON_CLASS_AUTO_RIFLE,
 	WEAPON_CLASS_ASSAULT_RIFLE,
 	WEAPON_CLASS_SHOTGUN,
 	WEAPON_CLASS_GRENADE,
@@ -1178,7 +1194,9 @@ typedef enum
 	WEAPON_CLASS_LAUNCHER,
 	WEAPON_CLASS_BEAM,
 	WEAPON_CLASS_SCOPED,
-	WEAPON_CLASS_SCOPABLE
+	WEAPON_CLASS_SCOPABLE,
+	WEAPON_CLASS_AKIMBO,
+	WEAPON_CLASS_UNUSED
 
 } weaponClass_t;
 
@@ -1807,45 +1825,6 @@ struct splinePath_s {
 
 extern int numSplinePaths;
 extern splinePath_t splinePaths[MAX_SPLINE_PATHS];
-
-typedef enum
-{
-	S_LT_NOT_LOOPED = 0,
-	S_LT_LOOPED_ON,
-	S_LT_LOOPED_OFF
-} speakerLoopType_t;
-
-typedef enum
-{
-	S_BT_LOCAL = 0,
-	S_BT_GLOBAL,
-	S_BT_NOPVS
-} speakerBroadcastType_t;
-
-typedef struct bg_speaker_s
-{
-	char filename[MAX_QPATH];
-	qhandle_t noise;
-	vec3_t origin;
-	char targetname[32];
-	long targetnamehash;
-
-	speakerLoopType_t loop;
-	speakerBroadcastType_t broadcast;
-	int wait;
-	int random;
-	int volume;
-	int range;
-
-	qboolean activated;
-	int nextActivateTime;
-	int soundTime;
-} bg_speaker_t;
-
-void BG_ClearScriptSpeakerPool(void);
-qboolean BG_LoadSpeakerScript(const char *filename);
-int BG_NumScriptSpeakers(void);
-bg_speaker_t *BG_GetScriptSpeaker(int index);
 
 pathCorner_t *BG_Find_PathCorner( const char *match );
 splinePath_t* BG_GetSplineData( int number, qboolean* backwards );

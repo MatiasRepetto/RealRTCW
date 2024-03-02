@@ -175,13 +175,9 @@ void UseHoldableItem( gentity_t *ent, int item ) {
 		}
 		break;
 
-	case HI_ADRENALINE:       
-		ent->client->ps.powerups[PW_NOFATIGUE] = 60000;
+	case HI_ADRENALINE:     // Adrenaline 1.0. Health+Stamina
+		ent->client->ps.powerups[PW_NOFATIGUE] = 10000;
 		ent->health += 100;
-		if ( !g_cheats.integer ) 
-		{
-		steamSetAchievement("ACH_ADRENALINE");
-		}
 		
 		if (!g_decaychallenge.integer){
 		if ( g_gameskill.integer == GSKILL_REALISM || g_gameskill.integer == GSKILL_MAX ) {
@@ -192,39 +188,93 @@ void UseHoldableItem( gentity_t *ent, int item ) {
 			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 1.25;
 		}
 		}
+
+		if ( !g_cheats.integer ) 
+		{
+		steamSetAchievement("ACH_ADRENALINE");
+		}
+
 		break;
-	case HI_EG_SYRINGE:       
+	case HI_EG_SYRINGE:  // Adrenaline 2.0. Health+Stamina+Speed
+	    ent->health += 100;       
+		ent->client->ps.powerups[PW_NOFATIGUE] = 15000;
+
         ent->client->ps.powerups[PW_HASTE] = level.time - ( level.time % 1000 );
 		ent->client->ps.powerups[PW_HASTE] += 30 * 1000;
-		ent->client->ps.powerups[PW_NOFATIGUE] = 30000;
 		
-		/*if ( !g_cheats.integer ) 
+		if (!g_decaychallenge.integer){
+		if ( g_gameskill.integer == GSKILL_REALISM || g_gameskill.integer == GSKILL_MAX ) {
+			if ( ent->health > ent->client->ps.stats[STAT_MAX_HEALTH] ) {
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 2.0;
+		}
+		} else if ( ent->health > ent->client->ps.stats[STAT_MAX_HEALTH] ) {
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 1.25;
+		}
+		}
+
+		if ( !g_cheats.integer ) 
 		{
 		steamSetAchievement("ACH_ADRENALINE");
 		}
-		*/
+
 		break;
-	case HI_BG_SYRINGE:       
-        ent->client->ps.powerups[PW_BATTLESUIT] = level.time - ( level.time % 1000 );
+	case HI_BG_SYRINGE:       // Adrenaline 3.0. Health+Stamina+Speed+Armor
+		ent->health += 100;
+		ent->client->ps.powerups[PW_NOFATIGUE] = 15000;       
+
+        ent->client->ps.powerups[PW_HASTE] = level.time - ( level.time % 1000 );
+		ent->client->ps.powerups[PW_HASTE] += 30 * 1000;
+
+		ent->client->ps.powerups[PW_BATTLESUIT] = level.time - ( level.time % 1000 );
 		ent->client->ps.powerups[PW_BATTLESUIT] += 30 * 1000;
-		
-		/*if ( !g_cheats.integer ) 
+
+		if (!g_decaychallenge.integer){
+		if ( g_gameskill.integer == GSKILL_REALISM || g_gameskill.integer == GSKILL_MAX ) {
+			if ( ent->health > ent->client->ps.stats[STAT_MAX_HEALTH] ) {
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 2.0;
+		}
+		} else if ( ent->health > ent->client->ps.stats[STAT_MAX_HEALTH] ) {
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 1.25;
+		}
+		}
+
+		if ( !g_cheats.integer ) 
 		{
 		steamSetAchievement("ACH_ADRENALINE");
 		}
-		*/
+		
 		break;
 
-	case HI_LP_SYRINGE:       
+	case HI_LP_SYRINGE:       // Adrenaline 4.0. Health+Stamina+Speed+Armor+Acrobatics
+	    ent->health += 100;
+		ent->client->ps.powerups[PW_NOFATIGUE] = 15000;  
+
+		
+        ent->client->ps.powerups[PW_HASTE] = level.time - ( level.time % 1000 );
+		ent->client->ps.powerups[PW_HASTE] += 30 * 1000;
+
+		ent->client->ps.powerups[PW_BATTLESUIT] = level.time - ( level.time % 1000 );
+		ent->client->ps.powerups[PW_BATTLESUIT] += 30 * 1000;
+
         ent->client->ps.powerups[PW_FLIGHT] = level.time - ( level.time % 1000 );
 		ent->client->ps.powerups[PW_FLIGHT] += 30 * 1000;
-		ent->client->ps.powerups[PW_NOFATIGUE] = 30000;
-		
-		/*if ( !g_cheats.integer ) 
+
+		if (!g_decaychallenge.integer){
+		if ( g_gameskill.integer == GSKILL_REALISM || g_gameskill.integer == GSKILL_MAX ) {
+			if ( ent->health > ent->client->ps.stats[STAT_MAX_HEALTH] ) {
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 2.0;
+		}
+		} else if ( ent->health > ent->client->ps.stats[STAT_MAX_HEALTH] ) {
+			ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] * 1.25;
+		}
+		}
+
+		if ( !g_cheats.integer ) 
 		{
 		steamSetAchievement("ACH_ADRENALINE");
 		}
-		*/
+		
+
 		break;
 
 	case HI_BANDAGES:       
@@ -344,7 +394,6 @@ void Add_Ammo( gentity_t *ent, int weapon, int count, qboolean fillClip ) {
 		COM_BitSet( ent->client->ps.weapons, ammoweap );
 	case WP_TESLA:
 	case WP_FLAMETHROWER:
-	case WP_WELROD:
 	case WP_HOLYCROSS:
 		noPack = qtrue;
 		break;
@@ -498,6 +547,12 @@ int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 		}
 	}
 
+		if ( weapon == WP_TT33 ) {
+		if ( COM_BitCheck( other->client->ps.weapons, WP_TT33 ) ) {
+			weapon = WP_DUAL_TT33;
+		}
+	}
+
 
 		if ( ent->item->giTag == WP_KNIFE ){
 		if ( other->client->ps.ammoclip[ent->item->giTag] < ammoTable[WP_KNIFE].maxammo  ){
@@ -534,9 +589,10 @@ int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 		COM_BitSet( other->client->ps.weapons, WP_M1GARAND );
 	} else if ( weapon == WP_DELISLESCOPE ) {
 		COM_BitSet( other->client->ps.weapons, WP_DELISLE );
+	} else if ( weapon == WP_M1941SCOPE ) {
+		COM_BitSet( other->client->ps.weapons, WP_M1941 );
 	}
-
-
+	
 	Add_Ammo( other, weapon, quantity, !alreadyHave );
 
 
@@ -1020,6 +1076,11 @@ void FinishSpawningItem( gentity_t *ent ) {
     return;
 	}
 
+	if ( g_regen.integer && ent->item->giType == IT_HEALTH )
+	{
+    return;
+	}
+
 	if ( g_decaychallenge.integer && ent->item->giType == IT_HEALTH )
 	{
     return;
@@ -1040,7 +1101,8 @@ void FinishSpawningItem( gentity_t *ent ) {
 									|| ent->item->giWeapon == WP_MP44
 									|| ent->item->giWeapon == WP_M7
 									|| ent->item->giWeapon == WP_BROWNING
-									|| ent->item->giWeapon == WP_M1941 ) )
+									|| ent->item->giWeapon == WP_M1941
+									|| ent->item->giWeapon == WP_AUTO5 ) )
 	{
     return;
 	}

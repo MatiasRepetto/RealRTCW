@@ -58,12 +58,12 @@ static int maxWeapBanks = MAX_WEAP_BANKS, maxWeapsInBank = MAX_WEAPS_IN_BANK; //
 int weapBanks[MAX_WEAP_BANKS][MAX_WEAPS_IN_BANK] = {
 	{0,                     0,                      0,            0,               0,            0            },  //	0 (empty)
 	{WP_KNIFE,              WP_DAGGER,              WP_HOLYCROSS, 0,               0,            0            },  //	1
-	{WP_LUGER,              WP_COLT,                WP_TT33,      WP_REVOLVER,     WP_WELROD,    WP_P38       },  //	2
+	{WP_LUGER,              WP_COLT,                WP_TT33,      WP_REVOLVER,     WP_HDM,    WP_P38       },  //	2
 	{WP_MP40,               WP_MP34,                WP_STEN,      WP_THOMPSON,     WP_PPSH,      0            },  //	3
 	{WP_MAUSER,             WP_GARAND,              WP_MOSIN,     WP_DELISLE,      0,            0            },  //	4
     {WP_G43,                WP_M1GARAND,            WP_M1941,     0,               0,            0            },  //	5
 	{WP_FG42,               WP_MP44,                WP_BAR,       0,               0,            0            },  //	6
-	{WP_M97,                WP_M30,                 0,            0,               0,            0            },  //	7
+	{WP_M97,                WP_M30,                 WP_AUTO5,     0,               0,            0            },  //	7
 	{WP_GRENADE_LAUNCHER,   WP_GRENADE_PINEAPPLE,   WP_DYNAMITE,  WP_AIRSTRIKE,    WP_POISONGAS, 0            },  //	8
 	{WP_PANZERFAUST,        WP_FLAMETHROWER,        WP_MG42M,     WP_BROWNING,     0,            0            },  //	9
 	{WP_VENOM,              WP_TESLA,               0,            0,               0,            0            }  //	10
@@ -100,7 +100,8 @@ static void CG_MachineGunEjectBrassNew( centity_t *cent ) {
 
 	if (cent->currentState.weapon == WP_M97 
 	|| cent->currentState.weapon == WP_M30 
-	|| cent->currentState.weapon == WP_REVOLVER )
+	|| cent->currentState.weapon == WP_REVOLVER
+	|| cent->currentState.weapon == WP_AUTO5)
 		return;
 
 	le = CG_AllocLocalEntity();
@@ -286,6 +287,9 @@ static void CG_PistolEjectBrassNew( centity_t *cent ) {
 	}
 
 	if (cent->currentState.weapon == WP_M97) //jaymod
+		return;
+
+	if (cent->currentState.weapon == WP_AUTO5) 
 		return;
 
 	if (cent->currentState.weapon == WP_REVOLVER) // no brass for revolver
@@ -1271,6 +1275,8 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 	char filename[MAX_QPATH];
 	int i;
 
+	weaponInfo->reloadFullSound = 0;
+
 	if ( !trap_PC_ReadToken( handle, &token ) || Q_stricmp( token.string, "{" ) ) {
 		return CG_RW_ParseError( handle, "expected '{'" );
 	}
@@ -1511,6 +1517,11 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 		}
 	}
 
+    // If reloadFullSound is not set, use reloadSound
+    if (weaponInfo->reloadFullSound == 0) {
+        weaponInfo->reloadFullSound = weaponInfo->reloadSound;
+    }
+
 	return qtrue;
 }
 
@@ -1588,9 +1599,15 @@ void CG_RegisterWeapon( int weaponNum, qboolean force ) {
 	filename = BG_GetWeaponFilename( weaponNum );
 	if ( !*filename )
 		return;
-
-	if ( !CG_RegisterWeaponFromWeaponFile( va( "weapons/%s", filename ), weaponInfo, weaponNum ) ) {
+     
+	if ( cg_vanilla_plus.integer ) {
+     	if ( !CG_RegisterWeaponFromWeaponFile( va( "weapons/vanilla/%s", filename ), weaponInfo, weaponNum ) ) {
 		CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
+	}
+	} else {
+	    if ( !CG_RegisterWeaponFromWeaponFile( va( "weapons/%s", filename ), weaponInfo, weaponNum ) ) {
+		CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
+	}
 	}
 
 }
@@ -1895,6 +1912,7 @@ static void CG_CalculateWeaponPosition( vec3_t origin, vec3_t angles ) {
 		case WP_TESLA:
 		case WP_MAUSER:
 		case WP_DELISLE:
+		case WP_M1941:
 		case WP_M1GARAND:
 		case WP_M7:
 		case WP_HOLYCROSS:
@@ -2758,7 +2776,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	centity_t   *nonPredictedCent;
 	qboolean firing;    // Ridah
 
-	qboolean akimboFire = qfalse;       //----(SA)	added
+	qboolean akimboFire_colt = qfalse;       //----(SA)	added
+    qboolean akimboFire_tt33 = qfalse;       
 
 	qboolean playerScaled;
 	qboolean drawpart, drawrealweap;
@@ -2787,8 +2806,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	}
 
 	// don't draw weapon stuff when looking through a scope
-	if ( weaponNum == WP_SNOOPERSCOPE || weaponNum == WP_SNIPERRIFLE || weaponNum == WP_FG42SCOPE || weaponNum == WP_DELISLESCOPE ||
-		 weapSelect == WP_SNOOPERSCOPE || weapSelect == WP_SNIPERRIFLE || weapSelect == WP_FG42SCOPE || weapSelect == WP_DELISLESCOPE ) {
+	if ( weaponNum == WP_SNOOPERSCOPE || weaponNum == WP_SNIPERRIFLE || weaponNum == WP_FG42SCOPE || weaponNum == WP_DELISLESCOPE || weaponNum == WP_M1941SCOPE ||
+		 weapSelect == WP_SNOOPERSCOPE || weapSelect == WP_SNIPERRIFLE || weapSelect == WP_FG42SCOPE || weapSelect == WP_DELISLESCOPE || weapSelect == WP_M1941SCOPE ) {
 		if ( isPlayer && !cg.renderingThirdPerson ) {
 			return;
 		}
@@ -2805,9 +2824,11 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 
 
 	if ( isPlayer ) {
-		akimboFire = BG_AkimboFireSequence( weaponNum, cg.predictedPlayerState.ammoclip[WP_AKIMBO], cg.predictedPlayerState.ammoclip[WP_COLT] );
+		akimboFire_colt = BG_AkimboFireSequence( weaponNum, cg.predictedPlayerState.ammoclip[WP_AKIMBO], cg.predictedPlayerState.ammoclip[WP_COLT] );
+        akimboFire_tt33 = BG_AkimboFireSequence( weaponNum, cg.predictedPlayerState.ammoclip[WP_DUAL_TT33], cg.predictedPlayerState.ammoclip[WP_TT33] );
 	} else if ( ps ) {
-		akimboFire = BG_AkimboFireSequence( weaponNum, ps->ammoclip[WP_AKIMBO], ps->ammoclip[WP_AKIMBO] );
+		akimboFire_colt = BG_AkimboFireSequence( weaponNum, ps->ammoclip[WP_AKIMBO], ps->ammoclip[WP_AKIMBO] );
+        akimboFire_tt33 = BG_AkimboFireSequence( weaponNum, ps->ammoclip[WP_DUAL_TT33], ps->ammoclip[WP_DUAL_TT33] );
 	}
 
 	// add the weapon
@@ -2920,7 +2941,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 
 		// opposite tag in akimbo, since at this point the weapon
 		// has fired and the fire seq has switched over
-		if ( weaponNum == WP_AKIMBO && akimboFire ) {
+		if ( (weaponNum == WP_AKIMBO  && akimboFire_colt) || (weaponNum == WP_DUAL_TT33  && akimboFire_tt33)) {
 			CG_PositionRotatedEntityOnTag( &brass, &gun, "tag_brass2" );
 		} else {
 			CG_PositionRotatedEntityOnTag( &brass, &gun, "tag_brass" );
@@ -3025,7 +3046,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			if ( COM_BitCheck( cg.predictedPlayerState.weapons, WP_SNIPERRIFLE ) ) {
 				barrel.hModel = weapon->modModels[0];
 				if ( barrel.hModel ) {
-					CG_PositionEntityOnTag( &barrel, &gun, "tag_scope", 0, NULL );
+					CG_PositionEntityOnTag(&barrel, parent, "tag_scope", 0, NULL);
 					CG_AddWeaponWithPowerups( &barrel, cent->currentState.powerups, ps, cent );
 				}
 			}
@@ -3037,7 +3058,20 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 			if ( COM_BitCheck( cg.predictedPlayerState.weapons, WP_DELISLESCOPE ) ) {
 				barrel.hModel = weapon->modModels[0];
 				if ( barrel.hModel ) {
-					CG_PositionEntityOnTag( &barrel, &gun, "tag_scope", 0, NULL );
+					CG_PositionEntityOnTag(&barrel, parent, "tag_scope", 0, NULL);
+					CG_AddWeaponWithPowerups( &barrel, cent->currentState.powerups, ps, cent );
+				}
+			}
+		}
+	}
+
+	
+		if ( isPlayer && !cg.renderingThirdPerson ) {      // (SA) for now just do it on the first person weapons
+		if ( weaponNum == WP_M1941) {
+			if ( COM_BitCheck( cg.predictedPlayerState.weapons, WP_M1941SCOPE ) ) {
+				barrel.hModel = weapon->modModels[0];
+				if ( barrel.hModel ) {
+					CG_PositionEntityOnTag(&barrel, parent, "tag_scope", 0, NULL);
 					CG_AddWeaponWithPowerups( &barrel, cent->currentState.powerups, ps, cent );
 				}
 			}
@@ -3084,7 +3118,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 	angles[ROLL]    = crandom() * 10;
 	AnglesToAxis( angles, flash.axis );
 
-	if ( weaponNum == WP_AKIMBO )
+	if ( weaponNum == WP_AKIMBO || weaponNum == WP_DUAL_TT33 )
 	{
 		if (!ps || cg.renderingThirdPerson)
 		{
@@ -3527,6 +3561,7 @@ void CG_DrawWeaponSelect( void ) {
 		case WP_MP44:
 		case WP_MG42M:
 		case WP_M97:
+		case WP_AUTO5:
 		case WP_BROWNING:
 		case WP_M30:
 		case WP_STEN:
@@ -3689,6 +3724,11 @@ static qboolean CG_WeaponSelectable( int i ) {
 		break;
 	case WP_DELISLESCOPE:
 		if ( i == WP_DELISLE ) {
+			return qtrue;
+		}
+		break;
+	case WP_M1941SCOPE:
+		if ( i == WP_M1941 ) {
 			return qtrue;
 		}
 		break;
@@ -3988,6 +4028,10 @@ void CG_SetSniperZoom( int lastweap, int newweap ) {
 //			cg.zoomedScope	= 1;	// TODO: add to zoomTable
 //			cg.zoomTime		= cg.time;
 		break;
+	case WP_M1941SCOPE:
+//			cg.zoomedScope	= 1;	// TODO: add to zoomTable
+//			cg.zoomTime		= cg.time;
+		break;
 	}
 
 	switch ( newweap ) {
@@ -4001,6 +4045,11 @@ void CG_SetSniperZoom( int lastweap, int newweap ) {
 		zoomindex = ZOOM_SNIPER;
 		break;
 	case WP_DELISLESCOPE:
+		cg.zoomval = cg_zoomDefaultSniper.value;
+		cg.zoomedScope  = 700;      // TODO: add to zoomTable
+		zoomindex = ZOOM_SNIPER;
+		break;
+	case WP_M1941SCOPE:
 		cg.zoomval = cg_zoomDefaultSniper.value;
 		cg.zoomedScope  = 700;      // TODO: add to zoomTable
 		zoomindex = ZOOM_SNIPER;
@@ -4102,6 +4151,7 @@ void CG_FinishWeaponChange( int lastweap, int newweap ) {
 		case WP_SNOOPERSCOPE:
 		case WP_FG42SCOPE:
 		case WP_DELISLESCOPE:
+		case WP_M1941SCOPE:
 			break;
 		default:
 			cg.switchbackWeapon = lastweap;
@@ -4183,10 +4233,17 @@ void CG_AltWeapon_f( void ) {
 		case WP_COLT:
 			weapBanks[2][1] = WP_AKIMBO;
 			break;
+		case WP_DUAL_TT33:
+			weapBanks[2][2] = WP_TT33;
+			break;
+		case WP_TT33:
+			weapBanks[2][2] = WP_DUAL_TT33;
+			break;
 		case WP_MAUSER:
 		case WP_GARAND:
 		case WP_FG42:
 		case WP_DELISLE:
+		case WP_M1941:
 		    if ( spd > 180.0f ) 
 			{
 				return;
@@ -4241,6 +4298,9 @@ void CG_NextWeap( qboolean switchBanks ) {
 		break;
 	case WP_AKIMBO:
 		curweap = num = WP_COLT;
+		break;
+	case WP_DUAL_TT33:
+		curweap = num = WP_TT33;
 		break;
 	}
 
@@ -4384,6 +4444,9 @@ void CG_PrevWeap( qboolean switchBanks ) {
 		break;
 	case WP_AKIMBO:
 		curweap = num = WP_COLT;
+		break;
+	case WP_DUAL_TT33:
+		curweap = num = WP_TT33;
 		break;
 	}
 
@@ -4996,13 +5059,14 @@ void CG_WeaponFireRecoil( int weapon ) {
 	case WP_COLT:
 	case WP_TT33:
 	case WP_AKIMBO:
+	case WP_DUAL_TT33:
 	case WP_P38: 
 	   yawRandom = 0.5;
 	   pitchRecoilAdd = 2;
 	   pitchAdd = 1;
 	break;
 	case WP_REVOLVER:
-	case WP_WELROD:
+	case WP_HDM:
 	    pitchAdd = 1;
 	    yawRandom = 0.5;
     break;
@@ -5020,6 +5084,7 @@ void CG_WeaponFireRecoil( int weapon ) {
 	case WP_SNIPERRIFLE:
 	case WP_SNOOPERSCOPE:
 	case WP_DELISLESCOPE:
+	case WP_M1941SCOPE:
 		pitchAdd = 0.8;
 	break;
 	case WP_MP40:
@@ -5042,6 +5107,7 @@ void CG_WeaponFireRecoil( int weapon ) {
 		yawRandom = 1;  
 	break;
 	case WP_M97:
+	case WP_AUTO5:
 	case WP_M30:
 		pitchRecoilAdd = 1;
 		pitchAdd = 8 + rand() % 3;
@@ -5505,10 +5571,12 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, in
 
 	case WP_LUGER:
 	case WP_AKIMBO: 
+	case WP_DUAL_TT33:
 	case WP_COLT:
 	case WP_MAUSER:
 	case WP_DELISLE:
 	case WP_DELISLESCOPE:
+	case WP_M1941SCOPE:
 	case WP_GARAND:
 	case WP_SNIPERRIFLE:
 	case WP_SNOOPERSCOPE:
@@ -5516,7 +5584,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, in
 	case WP_MP34:
 	case WP_TT33:
 	case WP_P38:
-	case WP_WELROD:
+	case WP_HDM:
 	case WP_PPSH:
 	case WP_MOSIN:
 	case WP_G43:
@@ -5526,6 +5594,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, in
 	case WP_MG42M:
 	case WP_BROWNING:
 	case WP_M97:
+	case WP_AUTO5:
 	case WP_M30:
 	case WP_REVOLVER:
 	case WP_FG42:
@@ -5636,7 +5705,7 @@ void CG_MissileHitWall( int weapon, int clientNum, vec3_t origin, vec3_t dir, in
 		// enough to see it, this way we can leave other marks around a lot
 		// longer, since most of the time we can't actually see the bullet holes
 // (SA) small modification.  only do this for non-rifles (so you can see your shots hitting when you're zooming with a rifle scope)
-		if ( weapon == WP_FG42SCOPE || weapon == WP_SNIPERRIFLE || weapon == WP_SNOOPERSCOPE || weapon == WP_DELISLESCOPE || ( Distance( cg.refdef.vieworg, origin ) < 384 ) ) {
+		if ( weapon == WP_FG42SCOPE || weapon == WP_SNIPERRIFLE || weapon == WP_SNOOPERSCOPE || weapon == WP_DELISLESCOPE || weapon == WP_M1941SCOPE || ( Distance( cg.refdef.vieworg, origin ) < 384 ) ) {
 
 			if ( clientNum ) {
 

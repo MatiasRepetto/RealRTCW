@@ -47,6 +47,8 @@ typedef struct {
 gentity_t g_entities[MAX_GENTITIES];
 gclient_t g_clients[MAX_CLIENTS];
 
+int g_scriptGlobalAccumBuffer[G_MAX_SCRIPT_GLOBAL_ACCUM_BUFFERS];
+
 gentity_t       *g_camEnt = NULL;   //----(SA)	script camera
 
 // Rafael gameskill
@@ -163,6 +165,8 @@ vmCvar_t g_randomweapons;
 vmCvar_t g_realism;
 vmCvar_t g_regen;
 vmCvar_t g_flushItems;	// items land depending on the slope thy're on
+vmCvar_t g_midgame;
+vmCvar_t g_vanilla_plus;
 
 vmCvar_t g_mapname;
 
@@ -193,6 +197,8 @@ cvarTable_t gameCvarTable[] = {
 	{ &g_randomweapons, "g_randomweapons", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 	{ &g_realism, "g_realism", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 	{ &g_regen, "g_regen", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &g_midgame, "g_midgame", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
+	{ &g_vanilla_plus, "g_vanilla_plus", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 
 	{ &g_reloading, "g_reloading", "0", CVAR_ROM },   //----(SA)	added
 
@@ -683,7 +689,8 @@ void G_CheckForCursorHints( gentity_t *ent ) {
 					if ( ent->s.weapon != WP_SNIPERRIFLE &&
 						 ent->s.weapon != WP_SNOOPERSCOPE &&
 						 ent->s.weapon != WP_FG42SCOPE &&
-						 ent->s.weapon != WP_DELISLESCOPE ) 
+						 ent->s.weapon != WP_DELISLESCOPE &&
+						 ent->s.weapon != WP_M1941SCOPE ) 
 						{
 						if ( traceEnt->takedamage ) {
 							hintDist = CH_ACTIVATE_DIST;
@@ -1208,7 +1215,6 @@ extern void trap_Cvar_Reset( const char *var_name );
 
 void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	int i;
-	char   cs[MAX_INFO_STRING];
 
 	steamInit();
 
@@ -1243,10 +1249,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	level.animScriptData.playSound = G_AnimScriptSound;
 
 	G_InitWorldSession();
-
-	trap_GetServerinfo(cs, sizeof(cs));
-	Q_strncpyz(level.mapname, Info_ValueForKey(cs, "mapname"), sizeof(level.mapname));
-	G_LogPrintf("map: %s\n", level.mapname);
 
 	// initialize all entities for this game
 	memset( g_entities, 0, MAX_GENTITIES * sizeof( g_entities[0] ) );
@@ -1316,9 +1318,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	SaveRegisteredItems();
 
-	BG_ClearScriptSpeakerPool();
-
-	BG_LoadSpeakerScript(va("sound/maps/%s.sps", level.mapname));
 
 	G_ModelIndex( SP_PODIUM_MODEL );
 

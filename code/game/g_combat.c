@@ -129,6 +129,9 @@ void TossClientItems( gentity_t *self ) {
 	if ( weapon == WP_AKIMBO ) { //----(SA)	added
 		weapon = WP_COLT;
 	}
+	if ( weapon == WP_DUAL_TT33 ) { //----(SA)	added
+		weapon = WP_TT33;
+	}
 //----(SA)	end
 
 
@@ -590,6 +593,7 @@ qboolean IsHeadShotWeapon( int mod, gentity_t *targ, gentity_t *attacker ) {
 		   if ( mod == MOD_SNIPERRIFLE ||
 			    mod == MOD_SNOOPERSCOPE ||
 			    mod == MOD_DELISLESCOPE ||
+				mod == MOD_M1941SCOPE ||
 			    mod == MOD_MAUSER ) {
 			    return qtrue;
 		        }
@@ -619,11 +623,12 @@ qboolean IsHeadShotWeapon( int mod, gentity_t *targ, gentity_t *attacker ) {
 	case MOD_LUGER:
 	case MOD_COLT:
 	case MOD_AKIMBO:
+	case MOD_DUAL_TT33:
 	case MOD_MP40:
 	case MOD_MP34:
 	case MOD_TT33:
 	case MOD_P38:
-	case MOD_WELROD:
+	case MOD_HDM:
 	case MOD_PPSH:
 	case MOD_MOSIN:
 	case MOD_G43:
@@ -897,9 +902,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 			// Rafael - had to change this since the
 			// we added a new lvl of diff
 			if ( g_gameskill.integer == GSKILL_EASY ) {
-				damage *= 0.25;
-			} else if ( g_gameskill.integer == GSKILL_MEDIUM ) {
 				damage *= 0.75;
+			} else if ( g_gameskill.integer == GSKILL_MEDIUM ) {
+				damage *= 0.80;
 			} else if ( g_gameskill.integer == GSKILL_HARD ) {
 				damage *= 0.9;
 			} else {
@@ -1080,7 +1085,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 			return;
 		}*/
 
-		damage *= 0.15;
+		damage *= 0.30;
 	}
 
 	// always give half damage if hurting self
@@ -1243,6 +1248,8 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 		client->damage_armor += asave;
 		client->damage_blood += take;
 		client->damage_knockback += knockback;
+
+		client->healthRegenStartTime = level.time + 5000; // This will reset health regen timer
 
 		if ( dir ) {
 			VectorCopy( dir, client->damage_from );
