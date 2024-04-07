@@ -206,6 +206,7 @@ struct gentity_s {
 									// bodyque uses this
 
 	int flags;                      // FL_* variables
+	char        *translation;
 	char		*Name;
 	char        *model;
 	char        *model2;
@@ -438,6 +439,8 @@ struct gentity_s {
 
 	// -------------------------------------------------------------------------------------------
 	// if working on a post release patch, new variables should ONLY be inserted after this point
+
+	int canSpeak;               // can this entity speak?
 };
 
 // Ridah
@@ -495,6 +498,8 @@ typedef struct {
 //
 #define MAX_NETNAME         36
 #define MAX_VOTE_COUNT      3
+
+#define MAX_TRANSLATION_TOKEN 36
 
 #define PICKUP_ACTIVATE 0   // pickup items only when using "+activate"
 #define PICKUP_TOUCH    1   // pickup items when touched
@@ -1118,6 +1123,7 @@ extern vmCvar_t g_fullarsenal;
 extern vmCvar_t g_endmapbonus;
 extern vmCvar_t g_randomweapons;
 extern vmCvar_t g_midgame;
+extern vmCvar_t g_dlc1;
 
 extern vmCvar_t g_reloading;        //----(SA)	added
 
@@ -1211,7 +1217,7 @@ extern vmCvar_t g_aicanheadshot;
 extern vmCvar_t g_realism;
 extern vmCvar_t g_regen;
 extern vmCvar_t	g_flushItems;
-extern vmCvar_t g_vanilla_plus;
+extern vmCvar_t g_vanilla_guns;
 
 void	trap_Print( const char *text );
 void	trap_Error( const char *text ) __attribute__((noreturn));

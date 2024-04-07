@@ -2767,6 +2767,45 @@ static void CG_DrawDynamiteStatus( void ) {
 	trap_R_SetColor( NULL );
 }
 
+/*
+=================
+CG_ScanForCrosshairEntity
+=================
+*/
+static void CG_ScanForCrosshairEntity( void ) {
+	trace_t trace;
+	vec3_t start, end;
+	//int content;
+
+	VectorCopy( cg.refdef.vieworg, start );
+	VectorMA( start, 4096, cg.refdef.viewaxis[0], end );  
+
+	CG_Trace( &trace, start, vec3_origin, vec3_origin, end,
+			  cg.snap->ps.clientNum, CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_ITEM );
+
+	if ( trace.entityNum >= MAX_CLIENTS ) {
+		return;
+	}
+
+	// if the player is in fog, don't show it
+	/*content = trap_CM_PointContents( trace.endpos, 0 );
+	if ( content & CONTENTS_FOG ) {
+		return;
+	}*/
+
+	// if the player is invisible, don't show it
+	if ( cg_entities[ trace.entityNum ].currentState.powerups & ( 1 << PW_INVIS ) ) {
+		return;
+	}
+
+	// update the fade timer
+	cg.crosshairClientNum = trace.entityNum;
+	cg.crosshairClientTime = cg.time;
+	if ( cg.crosshairClientNum != cg.identifyClientNum && cg.crosshairClientNum != ENTITYNUM_WORLD ) {
+		cg.identifyClientRequest = cg.crosshairClientNum;
+	}
+}
+
 
 
 /*
@@ -2797,7 +2836,49 @@ CG_DrawCrosshairNames
 =====================
 */
 static void CG_DrawCrosshairNames( void ) {
-return;
+	float       *color;
+	char        *name;
+	float w;
+
+	const char  *s;
+
+	if ( cg_drawCrosshair.integer < 0 ) {
+		return;
+	}
+	if ( !cg_drawCrosshairNames.integer ) {
+		return;
+	}
+	if ( cg.renderingThirdPerson ) {
+		return;
+	}
+
+	// scan the known entities to see if the crosshair is sighted on one
+	CG_ScanForCrosshairEntity();
+
+	// draw the name of the player being looked at
+	color = CG_FadeColor( cg.crosshairClientTime, 100 );
+
+	if ( !color ) {
+		trap_R_SetColor( NULL );
+		return;
+	}
+
+	if ( cg.crosshairClientNum > MAX_CLIENTS ) {
+		return;
+	}
+
+	name = cgs.clientinfo[ cg.crosshairClientNum ].translation;
+
+	s = va( "%s", name );
+	if ( !s ) {
+		return;
+	}
+	w = CG_DrawStrlen( s ) * SMALLCHAR_WIDTH;
+
+	// draw the name and class
+	CG_DrawSmallStringColor( 370 - w / 2, 190, s, color );
+
+	trap_R_SetColor( NULL );
 }
 
 

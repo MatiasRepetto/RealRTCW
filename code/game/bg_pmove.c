@@ -2013,22 +2013,28 @@ static void PM_Footsteps( void ) {
 
 		// now footsteps
 	#ifdef GAMEDLL
+	    if ( !pm->ps->aiChar ) {
 		if (g_realism.value) {
 			pm->ps->footstepCount += pm_realismSlowScale * (GetWeaponTableData(pm->ps->weapon)->moveSpeed * (pm->xyspeed * pml.frametime));
 		} else {
 			pm->ps->footstepCount += (GetWeaponTableData(pm->ps->weapon)->moveSpeed * (pm->xyspeed * pml.frametime));
 		}
+		} else {
+		    pm->ps->footstepCount  += 1.0 * (pm->xyspeed * pml.frametime);
+		}
 	
 	#endif
 	#ifdef CGAMEDLL
+		if ( !pm->ps->aiChar ) {
 		if (cg_realism.value) {
 			pm->ps->footstepCount += pm_realismSlowScale * (GetWeaponTableData(pm->ps->weapon)->moveSpeed * (pm->xyspeed * pml.frametime));
 		} else {
 		    pm->ps->footstepCount += (GetWeaponTableData(pm->ps->weapon)->moveSpeed * (pm->xyspeed * pml.frametime));
 		}
+		} else {
+		    pm->ps->footstepCount  += 1.0 * (pm->xyspeed * pml.frametime);
+		}
 	#endif
-
-
 
 		if ( pm->ps->footstepCount > animGap ) {
 
@@ -2199,15 +2205,19 @@ static void PM_BeginWeaponReload( int weapon ) {
 	if ( pm->ps->eFlags & EF_MELEE_ACTIVE ) {
 		return;
 	}
-       // Jaymod
+    
+	// Jaymod
+	if ( !pm->ps->aiChar) { 
 	if (weapon == WP_M97) {
 		PM_BeginM97Reload();
 		return;
 	}
+	
 
 	if (weapon == WP_AUTO5) {
 		PM_BeginAuto5Reload();
 		return;
+	}
 	}
 
 	switch ( weapon ) {
@@ -2247,7 +2257,7 @@ static void PM_BeginWeaponReload( int weapon ) {
 	    } else if ( pm->ps->weaponTime < ammoTable[weapon].reloadTime ) {
 		    pm->ps->weaponTime += ( ammoTable[weapon].reloadTime - pm->ps->weaponTime );
 	      }
-		 PM_AddEvent( EV_FILL_CLIP );
+		 PM_AddEvent( EV_FILL_CLIP_AI );
 	}
 
 	pm->ps->weaponstate = WEAPON_RELOADING;
@@ -2531,12 +2541,14 @@ static void PM_ReloadClip( int weapon ) {
 
 	ammomove = ammoTable[weapon].maxclip - ammoclip;
       // Jaymod
+	if ( !pm->ps->aiChar) { 
 	if( weapon == WP_M97 || weapon == WP_AUTO5 ) {
 		ammomove = 1;
 	}
 
 	if( weapon == WP_M1941 && pm->ps->ammoclip[WP_M1941] > 0 ) {
 		ammomove = 5;
+	}
 	}
 
 	if ( ammoreserve < ammomove ) {
@@ -2566,6 +2578,7 @@ PM_FinishWeaponReload
 static void PM_FinishWeaponReload( void ) {
 
 	// Jaymod Overrides for Shotgun
+	if ( !pm->ps->aiChar) { 
 	if( pm->ps->weapon == WP_M97 ) {
 		PM_M97Reload();
 		return;
@@ -2574,6 +2587,7 @@ static void PM_FinishWeaponReload( void ) {
 	if( pm->ps->weapon == WP_AUTO5 ) {
 		PM_Auto5Reload();
 		return;
+	}
 	}
 
 	PM_ReloadClip( pm->ps->weapon );          // move ammo into clip
@@ -2637,10 +2651,12 @@ void PM_CheckForReload( int weapon ) {
 	return;
 	case WEAPON_RELOADING:
 		// Jaymod
+		if ( !pm->ps->aiChar) { 
 		if( pm->ps->weapon == WP_M97 || pm->ps->weapon == WP_AUTO5 ) {
 			if(( pm->cmd.buttons & BUTTON_ATTACK) || ( pm->cmd.wbuttons & WBUTTON_ATTACK2) ) {
 				pm->pmext->m97reloadInterrupt = qtrue;
 			}
+		}
 		}
 		return;
 	default:
@@ -4502,10 +4518,22 @@ void PM_LadderMove( void ) {
 		if ( pm->ps->aiChar ) {
 			wishvel[2] = 0.5 * upscale * scale * (float)pm->cmd.forwardmove;
 		} else { // player speed
-			wishvel[2] = 0.9 * upscale * scale * (float)pm->cmd.forwardmove;
+	            #ifdef GAMEDLL
+				if (g_realism.value) {
+			    wishvel[2] = 0.7 * upscale * scale * (float)pm->cmd.forwardmove;
+		        } else {
+			    wishvel[2] = 0.9 * upscale * scale * (float)pm->cmd.forwardmove;
+		        }
+				#endif
+				 #ifdef CGAMEDLL
+				if (cg_realism.value) {
+			    wishvel[2] = 0.7 * upscale * scale * (float)pm->cmd.forwardmove;
+		        } else {
+			    wishvel[2] = 0.9 * upscale * scale * (float)pm->cmd.forwardmove;
+		        }
+				#endif
 		}
 	}
-//Com_Printf("wishvel[2] = %i, fwdmove = %i\n", (int)wishvel[2], (int)pm->cmd.forwardmove );
 
 	if ( pm->cmd.rightmove ) {
 		// strafe, so we can jump off ladder

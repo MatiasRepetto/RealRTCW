@@ -1276,6 +1276,7 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 	int i;
 
 	weaponInfo->reloadFullSound = 0;
+	weaponInfo->reloadSoundAi = 0;
 
 	if ( !trap_PC_ReadToken( handle, &token ) || Q_stricmp( token.string, "{" ) ) {
 		return CG_RW_ParseError( handle, "expected '{'" );
@@ -1401,6 +1402,12 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 			} else {
 				weaponInfo->reloadFullSound = trap_S_RegisterSound( filename );
 			}
+		} else if ( !Q_stricmp( token.string, "reloadSoundAi" ) ) {
+			if ( !PC_String_ParseNoAlloc( handle, filename, sizeof( filename ) ) ) {
+				return CG_RW_ParseError( handle, "expected reloadSoundAi filename" );
+			} else {
+				weaponInfo->reloadSoundAi = trap_S_RegisterSound( filename );
+			}
 		} else if ( !Q_stricmp( token.string, "reloadFastSound" ) ) {
 			if ( !PC_String_ParseNoAlloc( handle, filename, sizeof( filename ) ) ) {
 				return CG_RW_ParseError( handle, "expected reloadFastSound filename" );
@@ -1522,6 +1529,11 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
         weaponInfo->reloadFullSound = weaponInfo->reloadSound;
     }
 
+	if (weaponInfo->reloadSoundAi == 0) {
+        weaponInfo->reloadSoundAi = weaponInfo->reloadSound;
+    }
+
+
 	return qtrue;
 }
 
@@ -1600,7 +1612,7 @@ void CG_RegisterWeapon( int weaponNum, qboolean force ) {
 	if ( !*filename )
 		return;
      
-	if ( cg_vanilla_plus.integer ) {
+	if ( cg_vanilla_guns.integer ) {
      	if ( !CG_RegisterWeaponFromWeaponFile( va( "weapons/vanilla/%s", filename ), weaponInfo, weaponNum ) ) {
 		CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
 	}

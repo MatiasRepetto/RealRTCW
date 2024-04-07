@@ -552,6 +552,7 @@ typedef struct {
 	int clientNum;
 
 	char name[MAX_QPATH];
+	char translation[MAX_QPATH];
 	team_t team;
 
 	int botSkill;                   // 0 = not bot, 1-5 = bot
@@ -714,6 +715,7 @@ typedef struct weaponInfo_s {
 	sfxHandle_t reloadSound;
 	sfxHandle_t reloadFastSound;
 	sfxHandle_t	reloadFullSound;
+	sfxHandle_t reloadSoundAi;
 	sfxHandle_t	bounceSound;
 	sfxHandle_t spinupSound;        //----(SA)	added // sound started when fire button goes down, and stepped on when the first fire event happens
 	sfxHandle_t spindownSound;      //----(SA)	added // sound called if the above is running but player doesn't follow through and fire
@@ -916,6 +918,11 @@ typedef struct {
 
 	int crosshairPowerupNum;
 	int crosshairPowerupTime;
+
+	int identifyClientNum;                  // NERVE - SMF
+	int identifyClientHealth;               // NERVE - SMF
+	int identifyNextTime;                   // NERVE - SMF
+	int identifyClientRequest;              // NERVE - SMF
 
 //----(SA)	added
 	// cursorhints
@@ -1861,7 +1868,7 @@ extern vmCvar_t cg_ironChallenge;
 extern vmCvar_t cg_nohudChallenge;
 extern vmCvar_t cg_nopickupChallenge;
 extern vmCvar_t cg_decayChallenge;
-extern vmCvar_t cg_vanilla_plus;
+extern vmCvar_t cg_vanilla_guns;
 
 extern vmCvar_t cg_autoReload;
 extern vmCvar_t cg_uinfo;

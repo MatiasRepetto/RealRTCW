@@ -3398,7 +3398,7 @@ model="models/weapons2/venom/pu_venom.md3"
 		IT_WEAPON,
 		WP_VENOM,
 		WP_VENOM,
-		WP_VENOM,
+		WP_MG42M,
 		WP_VENOM,
 		"",                      
 		"",                      
@@ -3975,7 +3975,7 @@ model="models/multiplayer/mg42/mg42_3rd.md3"
 		IT_WEAPON,
 		WP_MG42M,
 		WP_MG42M,
-		WP_VENOM,
+		WP_MG42M,
 		WP_MG42M,
 		"",                      
 		"",                      
@@ -4001,7 +4001,7 @@ model="models/multiplayer/mg42/mg42_3rd.md3"
 		IT_WEAPON,
 		WP_BROWNING,
 		WP_BROWNING,
-		WP_BAR,
+		WP_MG42M,
 		WP_BROWNING,
 		"",                      
 		"",                      
@@ -4544,7 +4544,7 @@ model="models/powerups/ammo/44ammo_l.md3"
 		WP_REVOLVER,
 		"",                 
 		"",                  
-		{ 6,6,6,6,6 }
+		{ 12,12,12,12,12 }
 	},
 
 
@@ -4906,9 +4906,9 @@ model="models/powerups/ammo/am127mm.md3"
 		100,
 		IT_AMMO,
 		WP_NONE,
-		WP_VENOM,
-		WP_VENOM,
-		WP_VENOM,
+		WP_MG42M,
+		WP_MG42M,
+		WP_MG42M,
 		"",                         
 		"",                        
 		{100,100,100,100,100}
@@ -5923,51 +5923,6 @@ qboolean BG_AddMagicAmmo( playerState_t *ps, int numOfClips ) {
 	int clip;
 	int weapNumOfClips;
 
-	// Gordon: handle grenades first
-	weapon = WP_GRENADE_LAUNCHER;
-	i = ammoTable[weapon].maxammo;
-
-	clip = BG_FindClipForWeapon( weapon );
-	if ( ps->ammoclip[clip] < i ) {
-
-		// Gordon: early out
-		if ( !numOfClips ) {
-			return qtrue;
-		}
-
-		ps->ammoclip[clip] += numOfClips;
-
-		ammoAdded = qtrue;
-
-		COM_BitSet( ps->weapons, weapon );
-
-		if ( ps->ammoclip[clip] > i ) {
-			ps->ammoclip[clip] = i;
-		}
-	}
-
-	weapon = WP_GRENADE_PINEAPPLE;
-	i = ammoTable[weapon].maxammo;
-
-	clip = BG_FindClipForWeapon( weapon );
-	if ( ps->ammoclip[clip] < i ) {
-
-		// Gordon: early out
-		if ( !numOfClips ) {
-			return qtrue;
-		}
-
-		ps->ammoclip[clip] += numOfClips;
-
-		ammoAdded = qtrue;
-
-		COM_BitSet( ps->weapons, weapon );
-
-		if ( ps->ammoclip[clip] > i ) {
-			ps->ammoclip[clip] = i;
-		}
-	}
-
 	// Gordon: now other weapons
 	for ( i = 0; reloadableWeapons[i] >= 0; i++ ) {
 		weapon = reloadableWeapons[i];
@@ -6911,6 +6866,7 @@ char *eventnames[] = {
 	"EV_EMPTYCLIP",
 	"EV_FILL_CLIP",
 	"EV_FILL_CLIP_FULL",
+	"EV_FILL_CLIP_AI",
 	"EV_WEAP_OVERHEAT",
 	"EV_CHANGE_WEAPON",
 	"EV_FIRE_WEAPON",
