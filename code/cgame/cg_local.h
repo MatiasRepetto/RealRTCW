@@ -696,6 +696,7 @@ typedef struct weaponInfo_s {
 	float flashDlight;
 	vec3_t flashDlightColor;
 	sfxHandle_t flashSound[4];          // fast firing weapons randomly choose
+	sfxHandle_t flashSoundAi[4];         // fast firing weapons randomly choose
 	sfxHandle_t flashEchoSound[4];      //----(SA)	added - distant gun firing sound
 	sfxHandle_t lastShotSound[4];       // sound of the last shot can be different (mauser doesn't have bolt action on last shot for example)
 
@@ -891,6 +892,12 @@ typedef struct {
 	int centerPrintY;
 	char centerPrint[1024];
 	int centerPrintLines;
+
+	int subtitlePrintTime;
+	int subtitlePrintCharWidth;
+	int subtitlePrintY;
+	char subtitlePrint[1024];
+	int subtitlePrintLines;
 
 	// fade in/out
 	int fadeTime;
@@ -1720,6 +1727,8 @@ extern vmCvar_t cg_crosshairHealth;
 extern vmCvar_t cg_drawStatus;
 extern vmCvar_t cg_draw2D;
 extern vmCvar_t cg_drawSubtitles;
+extern vmCvar_t cg_subtitleSize;
+extern vmCvar_t cg_subtitleShadow;
 extern vmCvar_t cg_drawFrags;
 extern vmCvar_t cg_animSpeed;
 extern vmCvar_t cg_debugAnim;
@@ -1755,6 +1764,7 @@ extern vmCvar_t cg_simpleItems;
 extern vmCvar_t cg_fov;
 extern vmCvar_t cg_fixedAspect;
 extern vmCvar_t cg_fixedAspectFOV;
+extern vmCvar_t cg_drawCheckpoint;
 extern vmCvar_t cg_oldWolfUI;
 extern vmCvar_t cg_drawStatusHead;
 extern vmCvar_t cg_hudWeapIcon;
@@ -2311,6 +2321,7 @@ void CG_DrawInformation( void );
 const char *CG_translateString( const char *str );
 const char *CG_bonusString( const char *str );
 const char *CG_translateTextString( const char *str );
+const char *CG_translateTextString2( const char *str );
 
 
 //

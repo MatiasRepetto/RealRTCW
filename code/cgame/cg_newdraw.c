@@ -391,6 +391,7 @@ static void CG_DrawCursorhint( rectDef_t *rect ) {
 		icon = cgs.media.hintShaders[HINT_NOACTIVATE];
 		break;
 	case HINT_PLYR_FRIEND:
+	case HINT_PLYR_SPEAK:
 		break;
 	case HINT_NOEXIT_FAR:
 		redbar = qtrue;     // draw the status bar in red to show that you can't exit yet
@@ -478,7 +479,7 @@ static void CG_DrawMessageIcon( rectDef_t *rect ) {
 
 	color = CG_FadeColor( cg.yougotmailTime, OBJECTIVE_MET_TIME );
 
-	if ( !color ) {
+	if ( !color || !cg_journalStyle.integer ) {
 		return;
 	}
 

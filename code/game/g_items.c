@@ -520,7 +520,7 @@ int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 
 	}
 
-	if (( weapon == WP_PPSH ) && strstr (level.scriptAI, "Village1"))
+	if (( weapon == WP_PPSH ) && strstr (level.scriptAI, "Factory"))
 	{
 	if ( !g_cheats.integer ) 
 	{
@@ -528,7 +528,7 @@ int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 	}
 	}
 
-	if (( weapon == WP_MOSIN ) && strstr (level.scriptAI, "chateau"))
+	if (( weapon == WP_MOSIN ) && strstr (level.scriptAI, "Village2_118"))
 	{
 	if ( !g_cheats.integer ) 
 	{
@@ -541,6 +541,14 @@ int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 	if ( !g_cheats.integer ) 
 	{
     steamSetAchievement("ACH_WINTERSTEIN_TESLA");
+	}
+	}
+
+	if (( weapon == WP_REVOLVER ) && strstr (level.scriptAI, "Escape #2"))
+	{
+	if ( !g_cheats.integer ) 
+	{
+    steamSetAchievement("ACH_AGENT1");
 	}
 	}
 
@@ -1109,6 +1117,12 @@ void FinishSpawningItem( gentity_t *ent ) {
 	{
     return;
 	}
+       
+    // No new ammo types too
+	if ( g_fullarsenal.integer == 0 && ent->item->giType == IT_AMMO && (ent->item->giAmmoIndex == WP_MP44 || ent->item->giAmmoIndex == WP_M97 || ent->item->giAmmoIndex == WP_BAR)) 
+	{
+	return;
+	} 
     
 	// RealRTCW arsenal without extra guns, value 2 will ge everything
 	if ( !g_dlc1.integer && ( ent->item->giWeapon == WP_M1941SCOPE

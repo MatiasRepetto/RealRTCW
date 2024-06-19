@@ -169,6 +169,7 @@ vmCvar_t g_midgame;
 vmCvar_t g_vanilla_guns;
 vmCvar_t g_dlc1;
 vmCvar_t g_class;
+vmCvar_t g_noobTube;
 
 vmCvar_t g_mapname;
 
@@ -203,6 +204,7 @@ cvarTable_t gameCvarTable[] = {
 	{ &g_vanilla_guns, "g_vanilla_guns", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 	{ &g_dlc1, "g_dlc1", "0", CVAR_ARCHIVE | CVAR_LATCH, 0, qfalse },
 	{ &g_class, "g_class", "0", CVAR_ARCHIVE, 0, qfalse },
+	{ &g_noobTube, "g_noobTube", "0", CVAR_ARCHIVE, 0, qfalse },
 
 	{ &g_reloading, "g_reloading", "0", CVAR_ROM },   //----(SA)	added
 
@@ -608,9 +610,18 @@ void G_CheckForCursorHints( gentity_t *ent ) {
 
 		// check for friendly.
 		if ( traceEnt->aiTeam == AITEAM_ALLIES || traceEnt->aiTeam == AITEAM_NEUTRAL ) {
+		
 			if (traceEnt->canSpeak == 1 ) {
-			    hintType = HINT_PLYR_FRIEND;
-			    hintDist = CH_ACTIVATE_DIST; 
+				if ( dist > CH_ACTIVATE_DIST ) {
+				   hintType = HINT_PLYR_FRIEND;
+			       hintDist = CH_FRIENDLY_DIST; 
+				} else {
+			       hintType = HINT_PLYR_SPEAK;
+			       hintDist = CH_ACTIVATE_DIST; 
+				}
+			} else {
+   		        hintType = HINT_PLYR_FRIEND;
+			    hintDist = CH_FRIENDLY_DIST; 
 			}
 		}
 
@@ -849,6 +860,7 @@ void G_CheckForCursorHints( gentity_t *ent ) {
 		case HINT_NOEXIT:
 		case HINT_NOEXIT_FAR:
 		case HINT_PLYR_FRIEND:
+		case HINT_PLYR_SPEAK:
 		case HINT_PLYR_NEUTRAL:
 		case HINT_PLYR_ENEMY:
 		case HINT_PLYR_UNKNOWN:

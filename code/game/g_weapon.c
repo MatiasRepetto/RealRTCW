@@ -112,6 +112,7 @@ void Weapon_Knife( gentity_t *ent ) {
 	// RF, no knife damage for big guys
 	switch ( traceEnt->aiCharacter ) {
 	case AICHAR_SUPERSOLDIER:
+	case AICHAR_SUPERSOLDIER_LAB:
 	case AICHAR_HEINRICH:
 		return;
 	}
@@ -1332,7 +1333,7 @@ void ThrowKnife( gentity_t *ent )
 	// entity handling
 	knife						= G_Spawn();
 	knife->classname 			= "knife";
-	knife->nextthink 			= level.time + 20000;
+	knife->nextthink 			= level.time + 100000;
 	knife->think				= G_FreeEntity;
 
 	// misc

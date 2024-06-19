@@ -133,6 +133,8 @@ vmCvar_t cg_crosshairY;
 vmCvar_t cg_crosshairHealth;
 vmCvar_t cg_draw2D;
 vmCvar_t cg_drawSubtitles;
+vmCvar_t cg_subtitleSize;
+vmCvar_t cg_subtitleShadow;
 vmCvar_t cg_drawFrags;
 vmCvar_t cg_teamChatsOnly;
 vmCvar_t cg_drawStatus;
@@ -169,6 +171,7 @@ vmCvar_t cg_simpleItems;
 vmCvar_t cg_fov;
 vmCvar_t cg_fixedAspect;
 vmCvar_t cg_fixedAspectFOV;
+vmCvar_t cg_drawCheckpoint;
 vmCvar_t cg_oldWolfUI;
 vmCvar_t cg_drawStatusHead;
 vmCvar_t cg_hudWeapIcon;
@@ -345,6 +348,8 @@ cvarTable_t cvarTable[] = {
 	{ &cg_gibs, "cg_gibs", "1", CVAR_ARCHIVE  },
 	{ &cg_draw2D, "cg_draw2D", "1", CVAR_ARCHIVE  },
 	{ &cg_drawSubtitles, "cg_drawSubtitles", "0", CVAR_ARCHIVE},
+	{ &cg_subtitleSize, "cg_subtitleSize", "7", CVAR_ARCHIVE},
+	{ &cg_subtitleShadow, "cg_subtitleShadow", "1", CVAR_ARCHIVE},
 	{ &cg_drawSpreadScale, "cg_drawSpreadScale", "1", CVAR_ARCHIVE },
 	{ &cg_drawFrags, "cg_drawFrags", "1", CVAR_ARCHIVE },
 	{ &cg_drawStatus, "cg_drawStatus", "1", CVAR_ARCHIVE  },
@@ -389,6 +394,8 @@ cvarTable_t cvarTable[] = {
 	{ &cg_bobroll, "cg_bobroll", "0.002", CVAR_ARCHIVE },
 
 	{ &cg_bobbing, "cg_bobbing", "1", CVAR_ARCHIVE },
+
+	{ &cg_drawCheckpoint, "cg_drawCheckpoint", "1", CVAR_ARCHIVE },
 
 	
 
@@ -1071,6 +1078,33 @@ static void CG_LoadTranslateStrings( void ) {
 /// Added by Eugeny Panikarowsky
 ////////
 const char *CG_translateTextString(const char *str) {
+	int i, numStrings;
+
+    numStrings = sizeof(cgs.ignoredSubtitles) / sizeof(cgs.ignoredSubtitles[0]) - 1;
+    for (i = 0; i < numStrings; i++) {
+        if (!strcmp(str, cgs.ignoredSubtitles[i])) {
+            // Return a special string to indicate an ignored subtitle
+            return "IGNORED_SUBTITLE";
+        }
+    }
+	numStrings = sizeof(translateTextStrings) / sizeof(translateTextStrings[0]) - 1;
+	i = 0;
+	
+	for (i = 0; i < numStrings; i++) {
+		if (!translateTextStrings[i].stringname || !strlen(translateTextStrings[i].stringname)) {
+			return str;
+		}
+		if (!strcmp(str, translateTextStrings[i].stringname)) {
+			if (translateTextStrings[i].stringtext && strlen(translateTextStrings[i].stringtext)) {
+				return translateTextStrings[i].stringtext;
+			}
+			break;
+		}
+	}
+	return str;
+}
+
+const char *CG_translateTextString2(const char *str) {
 	int i, numStrings;
 
 	numStrings = sizeof(cgs.ignoredSubtitles) / sizeof(cgs.ignoredSubtitles[0]) - 1;
@@ -1890,6 +1924,14 @@ qboolean CG_Asset_Parse( int handle ) {
 				return qfalse;
 			}
 			cgs.media.hintShaders[HINT_PLYR_FRIEND] = trap_R_RegisterShader( tempStr );
+			continue;
+		}
+
+		if ( Q_stricmp( token.string, "speakHint" ) == 0 ) {
+			if ( !PC_String_Parse( handle, &tempStr ) ) {
+				return qfalse;
+			}
+			cgs.media.hintShaders[HINT_PLYR_SPEAK] = trap_R_RegisterShader( tempStr );
 			continue;
 		}
 

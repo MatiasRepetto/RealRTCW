@@ -1507,7 +1507,7 @@ void CG_NewClientInfo( int clientNum ) {
 	Q_strncpyz( newInfo.name, v, sizeof( newInfo.name ) );
 
 	// isolate the player's translation token
-	v = CG_translateTextString( Info_ValueForKey( configstring, "tr" ) );
+	v = CG_translateTextString2( Info_ValueForKey( configstring, "tr" ) );
 	Q_strncpyz( newInfo.translation, v, sizeof( newInfo.translation ) );
 
 	// colors
@@ -5042,6 +5042,7 @@ void CG_Player( centity_t *cent ) {
 //----(SA)	modified
 	else if (   cent->currentState.aiChar == AICHAR_PROTOSOLDIER ||
 				cent->currentState.aiChar == AICHAR_SUPERSOLDIER ||
+				cent->currentState.aiChar == AICHAR_SUPERSOLDIER_LAB ||
 				cent->currentState.aiChar == AICHAR_HEINRICH ) {
 
 		char *protoTags[] = {   "tag_chest",
@@ -5108,6 +5109,11 @@ void CG_Player( centity_t *cent ) {
 			models = &cgs.media.protoArmor[0];
 			dynamicparts = totalparts = protoParts;
 		} else if ( cent->currentState.aiChar == AICHAR_SUPERSOLDIER ) {
+			tags = &ssTags[0];
+			models = &cgs.media.superArmor[0];
+			dynamicparts = 14;  // the other two stay permanent
+			totalparts = superParts;
+		} else if ( cent->currentState.aiChar == AICHAR_SUPERSOLDIER_LAB ) {
 			tags = &ssTags[0];
 			models = &cgs.media.superArmor[0];
 			dynamicparts = 14;  // the other two stay permanent
