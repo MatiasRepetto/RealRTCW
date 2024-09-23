@@ -1747,14 +1747,21 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 	case EV_FILL_CLIP:
 		DEBUGNAME( "EV_FILL_CLIP" );
 		if ( cg_weapons[es->weapon].reloadSound ) {
-			trap_S_StartSound( NULL, es->number, CHAN_WEAPON, cg_weapons[es->weapon].reloadSound ); // JPW NERVE following sherman's SP fix, should allow killing reload sound when player dies
+			if ( cg.predictedPlayerState.powerups[PW_HASTE_SURV] ) {
+			    trap_S_StartSound( NULL, es->number, CHAN_WEAPON, cg_weapons[es->weapon].reloadSoundFast );
+			} else {
+			    trap_S_StartSound( NULL, es->number, CHAN_WEAPON, cg_weapons[es->weapon].reloadSound );
+			}
 		}
 		break;
-
 	case EV_FILL_CLIP_FULL:
 		DEBUGNAME( "EV_FILL_CLIP_FULL" );
 		if ( cg_weapons[es->weapon].reloadFullSound ) {
-			trap_S_StartSound( NULL, es->number, CHAN_WEAPON, cg_weapons[es->weapon].reloadFullSound ); // JPW NERVE following sherman's SP fix, should allow killing reload sound when player dies
+			if ( cg.predictedPlayerState.powerups[PW_HASTE_SURV] ) {
+			    trap_S_StartSound( NULL, es->number, CHAN_WEAPON, cg_weapons[es->weapon].reloadFullSoundFast );
+			} else {
+			    trap_S_StartSound( NULL, es->number, CHAN_WEAPON, cg_weapons[es->weapon].reloadFullSound );
+			}
 		}
 		break;
 	case EV_FILL_CLIP_AI:
@@ -2256,6 +2263,14 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		}
 		//trap_S_StartSound( NULL, es->number, CHAN_ITEM, trap_S_RegisterSound( "sound/items/protect3.wav" ) );
 		break;
+	case EV_POWERUP_BATTLESUIT_SURV:
+		DEBUGNAME( "EV_POWERUP_BATTLESUIT_SURV" );
+		if ( es->number == cg.snap->ps.clientNum ) {
+			cg.powerupActive = PW_BATTLESUIT_SURV;
+			cg.powerupTime = cg.time;
+		}
+		trap_S_StartSound( NULL, es->number, CHAN_ITEM, trap_S_RegisterSound( "sound/items/protect3.wav" ) );
+		break;
 	case EV_POWERUP_REGEN:
 		DEBUGNAME( "EV_POWERUP_REGEN" );
 		if ( es->number == cg.snap->ps.clientNum ) {
@@ -2271,6 +2286,12 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		// (SA) okay, some events not getting through, so I'm still testing.  Works except for that tho.
 //		CG_Printf("lose had dir: %2.4f   %2.4f   %2.4f\n", dir[0], dir[1], dir[2]);
 		CG_LoseHat( cent, dir );
+		break;
+
+	case EV_REATTACH_HAT:
+		DEBUGNAME( "EV_REATTACH_HAT" );
+		ByteToDir( es->eventParm, dir );
+		CG_Player( cent );
 		break;
 
 	case EV_GIB_HEAD:

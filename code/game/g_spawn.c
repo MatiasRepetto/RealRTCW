@@ -186,6 +186,9 @@ field_t fields[] = {
 
 	{"stringname",       FOFS( translation ),          F_STRING},
 	{"canSpeak",         FOFS( canSpeak ),             F_INT},
+	{"price",            FOFS( price ),                F_INT},
+	{"buy_item",         FOFS( buy_item ),           F_STRING},
+	{"isWeapon",         FOFS( isWeapon ),             F_INT},
 	{NULL}
 };
 
@@ -198,6 +201,8 @@ typedef struct {
 void SP_info_player_start( gentity_t *ent );
 void SP_info_player_deathmatch( gentity_t *ent );
 void SP_info_player_intermission( gentity_t *ent );
+
+void SP_info_ai_respawn( gentity_t *ent );
 
 void SP_func_plat( gentity_t *ent );
 void SP_func_static( gentity_t *ent );
@@ -428,12 +433,17 @@ void SP_trigger_deathCheck( gentity_t *ent );
 void SP_misc_spawner( gentity_t *ent );
 void SP_props_decor_Scale( gentity_t *ent );
 
+void SP_target_buy( gentity_t *ent );
+
 spawn_t spawns[] = {
 	// info entities don't do anything at all, but provide positional
 	// information for things controlled by other processes
 	{"info_player_start", SP_info_player_start},
 	{"info_player_deathmatch", SP_info_player_deathmatch},
 	{"info_player_intermission", SP_info_player_intermission},
+
+	{"info_ai_respawn", SP_info_ai_respawn},
+	
 	{"info_null", SP_info_null},
 	{"info_notnull", SP_info_notnull},
 	{"info_notnull_big", SP_info_notnull_big},   //----(SA)	added
@@ -693,6 +703,8 @@ spawn_t spawns[] = {
 	{"script_model_med", SP_script_model_med},
 	{"script_mover", SP_script_mover},
 	{"script_multiplayer", SP_script_multiplayer},           // DHM - Nerve
+
+	{"target_buy", SP_target_buy},
 
 	{NULL, 0}
 };

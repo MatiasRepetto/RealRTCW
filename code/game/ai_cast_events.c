@@ -105,6 +105,8 @@ AICast_Pain
 void AICast_Pain( gentity_t *targ, gentity_t *attacker, int damage, vec3_t point ) {
 	cast_state_t    *cs;
 
+	qboolean killerPlayer	 = attacker && attacker->client && !( attacker->aiCharacter );
+
 	cs = AICast_GetCastState( targ->s.number );
 
 	// print debugging message
@@ -119,6 +121,11 @@ void AICast_Pain( gentity_t *targ, gentity_t *attacker, int damage, vec3_t point
 
 	if ( cs->aiFlags & AIFL_NOPAIN ) {
 		return;
+	}
+
+	if ( g_gametype.integer == GT_SURVIVAL && killerPlayer ) {
+
+	      attacker->client->ps.persistant[PERS_SCORE] += 10;
 	}
 
 	// process the event (turn to face the attacking direction? go into hide/retreat state?)
@@ -258,6 +265,36 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		}
 	}
 
+    if (g_gametype.integer == GT_SURVIVAL && killerPlayer) {
+        int score = 50;  // Default score
+
+    // Add score based on aiCharacter type
+    switch (attacker->aiCharacter) {
+        case AICHAR_SOLDIER:
+            score += 10;
+            break;
+        case AICHAR_ELITEGUARD:
+            score += 10;
+            break;
+        case AICHAR_BLACKGUARD:
+            score += 20;
+            break;
+        case AICHAR_VENOM:
+            score += 40;
+            break;
+        default:
+            break;
+    }
+
+    // Add additional score if killed with knife
+    if (modKnife) {
+        score += 100;
+    }
+
+
+    attacker->client->ps.persistant[PERS_SCORE] += score;
+    }
+
 
 	if (self->aiCharacter && !(self->aiCharacter == AICHAR_WARZOMBIE) && !(self->aiCharacter == AICHAR_ZOMBIE) && killerPlayer && modDagger ) // vampirism
 	{
@@ -284,6 +321,19 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 			attacker->health = attacker->client->ps.stats[STAT_MAX_HEALTH];
 		    }
 	}
+
+	  if (killerPlayer && attacker->client->ps.powerups[PW_VAMPIRE]) {
+
+			trap_SendServerCommand( -1, "mu_play sound/Zombie/firstsight/firstsight3.wav 0\n" );
+			G_AddEvent( self, EV_GIB_VAMPIRISM, killer );
+		    attacker->health += 25;
+		
+			if ( attacker->health > 300 ) 
+			{
+			attacker->health = 300;
+		    }
+
+	  }
 
 	// print debugging message
 	if ( aicast_debug.integer == 2 && attacker->s.number == 0 ) {
@@ -502,8 +552,14 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		respawn = qtrue;
 	}
 
-	if ( respawn && self->aiCharacter != AICHAR_ZOMBIE && self->aiCharacter != AICHAR_HELGA
-		 && self->aiCharacter != AICHAR_HEINRICH && nogib && !cs->norespawn ) {
+    // in Survival mode, we always respawn
+	if ( g_gametype.integer == GT_SURVIVAL )  {
+		respawn = qtrue;
+		nogib = qtrue;
+	}
+
+	if ( ( respawn && self->aiCharacter != AICHAR_ZOMBIE && self->aiCharacter != AICHAR_HELGA
+		 && self->aiCharacter != AICHAR_HEINRICH && nogib && !cs->norespawn ) ) {
 
 		if ( cs->respawnsleft != 0 ) {
 
@@ -511,7 +567,17 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 				cs->respawnsleft--;
 			}
 
-			if ( g_gameskill.integer == GSKILL_EASY ) {
+			if ( g_gametype.integer == GT_SURVIVAL ) {
+               int decrease = survivalKillCount / 15;  // Calculate decrease based on survivalKillCount
+               int rebirthTime = 20000 - decrease * 1000;  // Calculate rebirthTime
+
+                // Clamp rebirthTime to a minimum of 10 seconds
+               if (rebirthTime < 5000) {
+                 rebirthTime = 5000;
+               }
+
+                cs->rebirthTime = level.time + rebirthTime + rand() % 2000;
+           } else if ( g_gameskill.integer == GSKILL_EASY ) {
 				cs->rebirthTime = level.time + 25000 + rand() % 2000;
 			} else if ( g_gameskill.integer == GSKILL_MEDIUM ) {
 				cs->rebirthTime = level.time + 20000 + rand() % 2000;
@@ -526,6 +592,13 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	}
 
 	trap_LinkEntity( self );
+
+	// Decrement the counter for active AI characters
+	if ( g_gametype.integer == GT_SURVIVAL )  {
+       //activeAI[self->aiCharacter]--;
+	   survivalKillCount++;
+	   AICast_IncreaseMaxActiveAI();
+	}
 
 	// kill, instanly, any streaming sound the character had going
 	G_AddEvent( &g_entities[self->s.number], EV_STOPSTREAMINGSOUND, 0 );

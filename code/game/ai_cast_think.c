@@ -506,6 +506,14 @@ void AICast_Think( int client, float thinktime ) {
 			cs->revivingTime = 0;
 		}
 		//
+
+        if ( g_gametype.integer == GT_SURVIVAL )  { // Survival Respawn
+		if ( cs->rebirthTime && cs->rebirthTime < level.time ) {
+           AICast_SurvivalRespawn(ent, cs);
+		}
+
+		} else { // Normal Respawn
+
 		if ( cs->rebirthTime && cs->rebirthTime < level.time ) {
 			vec3_t mins, maxs;
 			int touch[10], numTouch;
@@ -602,6 +610,8 @@ void AICast_Think( int client, float thinktime ) {
 			}
 			trap_LinkEntity( ent );
 		}
+		}
+
 		// ZOMBIE should set effect flag if really dead
 		if ( cs->aiCharacter == AICHAR_ZOMBIE && !ent->r.contents ) {
 			ent->client->ps.eFlags |= EF_MONSTER_EFFECT2;

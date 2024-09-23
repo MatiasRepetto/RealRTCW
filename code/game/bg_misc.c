@@ -2204,7 +2204,7 @@ int reloadableWeapons[] = {
 	WP_MAUSER,      WP_SNIPERRIFLE, WP_SNOOPERSCOPE,    WP_MOSIN,               WP_M1GARAND,            WP_G43,
 	WP_MP44,        WP_BAR,         WP_M97,             WP_FG42SCOPE,           WP_BROWNING,            WP_VENOM,
 	WP_P38,         WP_M30,         WP_DELISLE,         WP_DELISLESCOPE,        WP_TESLA,               WP_M1941,
-	WP_AUTO5,       WP_M1941SCOPE,  WP_DUAL_TT33, -1
+	WP_AUTO5,       WP_M1941SCOPE,  WP_DUAL_TT33,       WP_HDM, -1
 };
 
 // new (10/18/00)
@@ -3100,7 +3100,7 @@ model="models/weapons2/mauser/mauser.md3"
 		IT_WEAPON,
 		WP_DELISLE,
 		WP_DELISLE,
-		WP_COLT,
+		WP_DELISLE,
 		WP_DELISLE,
 		"",                      
 		"",                      
@@ -3127,7 +3127,7 @@ model="models/weapons2/mauser/mauser.md3"
 		IT_WEAPON,
 		WP_DELISLESCOPE,
 		WP_DELISLESCOPE,
-		WP_COLT,
+		WP_DELISLE,
 		WP_DELISLE,
 		"",                      
 		"",                      
@@ -4567,6 +4567,62 @@ model="models/powerups/ammo/barammo.md3"
 		{40,40,30,30,30}	
 	},
 
+/*QUAKED ammo_hdmammo (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED SPIN - RESPAWN
+used by: HDM
+
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/powerups/ammo/barammo.md3"
+*/
+{
+		"ammo_hdm",
+		"sound/misc/am_pkup.wav",
+		{ 
+		"models/powerups/ammo/22cal.md3",
+		0, 
+		0
+		},
+
+		"icons/iconw_luger_1", 
+		"ammo_hdm",           
+		60,
+		IT_AMMO,
+		WP_NONE,
+		WP_HDM,
+		WP_HDM,
+		WP_HDM,
+		"",                 
+		"",                  
+		{50,40,40,30,30}	
+	},
+
+/*QUAKED ammo_delisle (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED SPIN - RESPAWN
+used by: HDM
+
+-------- MODEL FOR RADIANT ONLY - DO NOT SET THIS AS A KEY --------
+model="models/powerups/ammo/am45cal_m.md3"
+*/
+{
+		"ammo_delisle",
+		"sound/misc/am_pkup.wav",
+		{ 
+		"models/powerups/ammo/am45cal_m.md3",
+		0, 
+		0
+		},
+
+		"icons/iconw_luger_1", 
+		"ammo_delisle",           
+		60,
+		IT_AMMO,
+		WP_NONE,
+		WP_DELISLE,
+		WP_DELISLE,
+		WP_DELISLE,
+		"",                 
+		"",                  
+		{30,30,30,20,20}	
+	},
+
 /*QUAKED ammo_44ammo (.3 .3 1) (-16 -16 -16) (16 16 16) SUSPENDED SPIN - RESPAWN
 used by: MP44
 
@@ -5532,6 +5588,29 @@ model="models/powerups/holdable/zemphr_book.md3"
 		{0,0,0,0,0}
 	},
 
+/*QUAKED item_vampire (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+*/
+		{
+		"item_vampire",
+		"sound/Zombie/firstsight/firstsight1.wav",
+		{
+		"models/mapobjects/Skull/skul2.md3",
+		0, 
+		0
+		},
+		"",              
+		"Vampirism",       
+		30,
+		IT_POWERUP,
+		WP_NONE,
+		PW_VAMPIRE,
+		0,
+		0,
+		"",                            
+		"",   
+		{0,0,0,0,0}
+	},
+
 	/*QUAKED item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
 		{
@@ -5555,6 +5634,30 @@ model="models/powerups/holdable/zemphr_book.md3"
 		{0,0,0,0,0}
 	},
 
+	/*QUAKED item_haste (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+*/
+		{
+		"item_haste_surv",
+		"sound/pickup/q3powerups/haste.wav",
+		{
+		"models/powerups/instant/haste.md3",
+		0, 
+		0
+		},
+		"",                    
+		"Haste",     
+		30,
+		IT_POWERUP,
+		WP_NONE,
+		PW_HASTE_SURV,
+		0,
+		0,
+		"",                          
+		"",   
+		{0,0,0,0,0}
+	},
+
+
 
 		/*QUAKED item_enviro (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
 */
@@ -5572,6 +5675,30 @@ model="models/powerups/holdable/zemphr_book.md3"
 		IT_POWERUP,
 		WP_NONE,
 		PW_BATTLESUIT,
+		0,
+		0,
+		"",                          
+		"sound/items/airout.wav sound/items/protect3.wav",   
+		{0,0,0,0,0}
+	},
+
+
+		/*QUAKED item_enviro (.3 .3 1) (-16 -16 -16) (16 16 16) suspended
+*/
+		{
+		"item_enviro_surv",
+		"sound/pickup/q3powerups/protect.wav",
+		{
+		"models/powerups/instant/enviro.md3",
+		0, 
+		0
+		},
+		"",                             
+		"Battle Suit",     
+		30,
+		IT_POWERUP,
+		WP_NONE,
+		PW_BATTLESUIT_SURV,
 		0,
 		0,
 		"",                          
@@ -7042,6 +7169,7 @@ char *eventnames[] = {
 	"EV_VENOMFULL",
 	"EV_BULLET",             // otherEntity is the shooter
 	"EV_LOSE_HAT",
+	"EV_REATTACH_HAT",
 	"EV_GIB_HEAD",           // only blow off the head
 	"EV_PAIN",
 	"EV_CROUCH_PAIN",
@@ -7052,6 +7180,7 @@ char *eventnames[] = {
 	"EV_OBITUARY",
 	"EV_POWERUP_QUAD",
 	"EV_POWERUP_BATTLESUIT",
+	"EV_POWERUP_BATTLESUIT_SURV",
 	"EV_POWERUP_REGEN",
 	"EV_GIB_PLAYER",         // gib a previously living player
 	"EV_GIB_VAMPIRISM",

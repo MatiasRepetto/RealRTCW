@@ -700,13 +700,13 @@ static qboolean PM_CheckJump( void ) {
 	// Total stamina count is 20000
 		if (g_realism.value) {
 		   if ((pm->ps->sprintTime < 15000) && (pm->ps->sprintTime > 10000)) {
-		                pm->ps->velocity[2] = 220;
+		                pm->ps->velocity[2] = 260;
 		   } else if ((pm->ps->sprintTime < 10000) && (pm->ps->sprintTime > 5000)) {
-		                pm->ps->velocity[2] = 200;
+		                pm->ps->velocity[2] = 250;
 		   } else if ((pm->ps->sprintTime < 5000) && (pm->ps->sprintTime >= 0)) {
-					    pm->ps->velocity[2] = 180;
+					    pm->ps->velocity[2] = 230;
 		   } else { 
-		                pm->ps->velocity[2] = 240; // basically first jump
+		                pm->ps->velocity[2] = 270; // basically first jump
 		   }
 		} else {
 			            pm->ps->velocity[2] = 270; // no realism
@@ -715,13 +715,13 @@ static qboolean PM_CheckJump( void ) {
 	#ifdef CGAMEDLL
 		if (cg_realism.value) {
 		   if ((pm->ps->sprintTime < 15000) && (pm->ps->sprintTime > 10000)) {
-		                pm->ps->velocity[2] = 220;
+		                pm->ps->velocity[2] = 260;
 		   } else if ((pm->ps->sprintTime < 10000) && (pm->ps->sprintTime > 5000)) {
-		                pm->ps->velocity[2] = 200;
+		                pm->ps->velocity[2] = 250;
 		   } else if ((pm->ps->sprintTime < 5000) && (pm->ps->sprintTime >= 0)) {
-					    pm->ps->velocity[2] = 180;
+					    pm->ps->velocity[2] = 230;
 		   } else { 
-		                pm->ps->velocity[2] = 240; // basically first jump
+		                pm->ps->velocity[2] = 270; // basically first jump
 		   }
 		} else {
 			            pm->ps->velocity[2] = 270; // no realism
@@ -2185,6 +2185,10 @@ PM_BeginWeaponReload
 ==============
 */
 static void PM_BeginWeaponReload( int weapon ) {
+
+	int reloadTime = ammoTable[weapon].reloadTime;
+    int reloadTimeFull = ammoTable[weapon].reloadTimeFull;
+
 	// only allow reload if the weapon isn't already occupied (firing is okay)
 	if ( pm->ps->weaponstate != WEAPON_READY && pm->ps->weaponstate != WEAPON_FIRING ) {
 		return;
@@ -2233,30 +2237,36 @@ static void PM_BeginWeaponReload( int weapon ) {
 		break;
 	}
 
+	// If PW_HASTE_SURV powerup is active, reduce reloadTime by half
+    if ( pm->ps->powerups[PW_HASTE_SURV] ){
+       reloadTime /= 2;
+       reloadTimeFull /= 2;
+    }
+
     if ( !pm->ps->aiChar) { 
 	if ( pm->ps->ammoclip[BG_FindClipForWeapon(weapon)] == 0 ) {
-		  PM_ContinueWeaponAnim( WEAP_RELOAD2 );
+		  PM_ContinueWeaponAnim(pm->ps->powerups[PW_HASTE_SURV] ? WEAP_RELOAD2_FAST : WEAP_RELOAD2);
 	      if ( pm->ps->weaponstate == WEAPON_READY ) {
-		      pm->ps->weaponTime += ammoTable[weapon].reloadTimeFull;
-	      } else if ( pm->ps->weaponTime < ammoTable[weapon].reloadTimeFull ) {
-		      pm->ps->weaponTime += ( ammoTable[weapon].reloadTimeFull - pm->ps->weaponTime );
+		       pm->ps->weaponTime += reloadTimeFull;
+	      } else if (pm->ps->weaponTime < reloadTimeFull) {
+		      pm->ps->weaponTime += (reloadTimeFull - pm->ps->weaponTime);
 	      }
 		  PM_AddEvent( EV_FILL_CLIP_FULL );
 	} else {
-	      PM_ContinueWeaponAnim( WEAP_RELOAD1 );
+	      PM_ContinueWeaponAnim(pm->ps->powerups[PW_HASTE_SURV] ? WEAP_RELOAD1_FAST : WEAP_RELOAD1);
 	      if ( pm->ps->weaponstate == WEAPON_READY ) {
-		      pm->ps->weaponTime += ammoTable[weapon].reloadTime;
-	      } else if ( pm->ps->weaponTime < ammoTable[weapon].reloadTime ) {
-		      pm->ps->weaponTime += ( ammoTable[weapon].reloadTime - pm->ps->weaponTime );
+		      pm->ps->weaponTime += reloadTime;
+	       } else if (pm->ps->weaponTime < reloadTime) {
+		      pm->ps->weaponTime += (reloadTime - pm->ps->weaponTime);
 	      }
 		  PM_AddEvent( EV_FILL_CLIP );
 	}
 	} else {
-	  PM_ContinueWeaponAnim( WEAP_RELOAD1 );
+	  PM_ContinueWeaponAnim(pm->ps->powerups[PW_HASTE_SURV] ? WEAP_RELOAD1_FAST : WEAP_RELOAD1);
 	  	if ( pm->ps->weaponstate == WEAPON_READY ) {
-		    pm->ps->weaponTime += ammoTable[weapon].reloadTime;
-	    } else if ( pm->ps->weaponTime < ammoTable[weapon].reloadTime ) {
-		    pm->ps->weaponTime += ( ammoTable[weapon].reloadTime - pm->ps->weaponTime );
+		    pm->ps->weaponTime += reloadTime;
+	    } else if (pm->ps->weaponTime < reloadTime) {
+		    pm->ps->weaponTime += (reloadTime - pm->ps->weaponTime);
 	      }
 		 PM_AddEvent( EV_FILL_CLIP_AI );
 	}
@@ -3486,7 +3496,7 @@ static void PM_Weapon( void ) {
 	// unable to use weapon while sprinting
 	#ifdef GAMEDLL
 	if (!delayedFire && g_realism.value ) {
-			if ( ( pm->ps->pm_flags & PMF_SPRINTING ) ){
+			if ( ( pm->ps->pm_flags & PMF_SPRINTING ) && ( pm->ps->sprintTime > 0 ) ){
 			if ( pm->ps->weaponstate != WEAPON_SPRINT_IN ) {
 				pm->ps->weaponstate = WEAPON_SPRINT_IN;
 				PM_StartWeaponAnim(PM_SprintInAnimForWeapon(pm->ps->weapon));
@@ -3513,7 +3523,7 @@ static void PM_Weapon( void ) {
 	#ifdef CGAMEDLL
 	if ( !delayedFire && cg_realism.value ) {
 
-		if ( ( pm->ps->pm_flags & PMF_SPRINTING ) ){
+		if ( ( pm->ps->pm_flags & PMF_SPRINTING ) && ( pm->ps->sprintTime > 0 ) ){
 			if ( pm->ps->weaponstate != WEAPON_SPRINT_IN ) {
 				pm->ps->weaponstate = WEAPON_SPRINT_IN;
 				PM_StartWeaponAnim(PM_SprintInAnimForWeapon(pm->ps->weapon));
@@ -3573,7 +3583,7 @@ static void PM_Weapon( void ) {
 	}
 
 	// player is leaning - no fire
-	if ( pm->ps->leanf != 0 && pm->ps->weapon != WP_GRENADE_LAUNCHER && pm->ps->weapon != WP_GRENADE_PINEAPPLE && pm->ps->weapon != WP_DYNAMITE ) {
+	if ( pm->ps->leanf != 0 && pm->ps->weapon != WP_GRENADE_LAUNCHER && pm->ps->weapon != WP_GRENADE_PINEAPPLE && pm->ps->weapon != WP_DYNAMITE && pm->ps->weapon != WP_KNIFE ) {
 		return;
 	}
 
@@ -4002,11 +4012,11 @@ static void PM_Weapon( void ) {
 		}
 	}
 
-    /*
-	if ( pm->ps->powerups[PW_HASTE] ) {
-		addTime /= 1.6;
+    
+	if ( pm->ps->powerups[PW_HASTE_SURV] ) {
+		addTime /= 1.3;
 	}
-	*/
+	
 
 	// add the recoil amount to the aimSpreadScale
 //	pm->ps->aimSpreadScale += 3.0*aimSpreadScaleAdd;
@@ -4522,14 +4532,14 @@ void PM_LadderMove( void ) {
 		} else { // player speed
 	            #ifdef GAMEDLL
 				if (g_realism.value) {
-			    wishvel[2] = 0.7 * upscale * scale * (float)pm->cmd.forwardmove;
+			    wishvel[2] = 0.8 * upscale * scale * (float)pm->cmd.forwardmove;
 		        } else {
 			    wishvel[2] = 0.9 * upscale * scale * (float)pm->cmd.forwardmove;
 		        }
 				#endif
 				 #ifdef CGAMEDLL
 				if (cg_realism.value) {
-			    wishvel[2] = 0.7 * upscale * scale * (float)pm->cmd.forwardmove;
+			    wishvel[2] = 0.8 * upscale * scale * (float)pm->cmd.forwardmove;
 		        } else {
 			    wishvel[2] = 0.9 * upscale * scale * (float)pm->cmd.forwardmove;
 		        }
@@ -4590,9 +4600,7 @@ PM_Sprint
 void PM_Sprint( void ) {
 	if (    ( pm->cmd.buttons & BUTTON_SPRINT ) &&
 			( pm->cmd.forwardmove || pm->cmd.rightmove ) &&
-			!( pm->ps->pm_flags & PMF_DUCKED ) &&
-			( !pm->waterlevel )
-			) {
+			!( pm->ps->pm_flags & PMF_DUCKED ) ) {
 
 		if ( pm->ps->powerups[PW_NOFATIGUE] ) {    // take time from powerup before taking it from sprintTime
 			pm->ps->powerups[PW_NOFATIGUE] -= 2000 * pml.frametime; 

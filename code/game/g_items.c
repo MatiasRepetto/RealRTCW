@@ -97,6 +97,13 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 			other->client->ps.powerups[PW_NOFATIGUE] = 60000;
 		}
 	}
+   
+
+   if ( ent->item->giTag == PW_INVIS ) {
+
+	  other->flags |= FL_NOTARGET;
+
+   }
 
 	if ( ent->s.density == 2 ) {   // multi-stage health first stage
 		return RESPAWN_PARTIAL;
@@ -151,6 +158,10 @@ int Pickup_Treasure( gentity_t *ent, gentity_t *other ) {
 	player->numTreasureFound++;
 	G_SendMissionStats();
 	return RESPAWN_SP;  // no respawn
+
+	if ( g_gametype.integer == GT_SURVIVAL ) {
+	    other->client->ps.persistant[PERS_SCORE] += 400;
+	}
 }
 
 
@@ -438,6 +449,8 @@ void Add_Ammo( gentity_t *ent, int weapon, int count, qboolean fillClip ) {
 
 }
 
+int G_GetWeaponPrice( int weapon );
+int G_GetAmmoPrice( int weapon );
 
 /*
 ==============
@@ -446,6 +459,11 @@ Pickup_Ammo
 */
 int Pickup_Ammo( gentity_t *ent, gentity_t *other ) {
 	int quantity;
+
+	if ( g_gametype.integer == GT_SURVIVAL ) {
+		other->client->ps.persistant[PERS_SCORE] += G_GetAmmoPrice( ent->item->giTag );
+		return RESPAWN_SP;
+	}
 
 			if (g_decaychallenge.integer) {
 			quantity = 999;
@@ -504,6 +522,11 @@ int Pickup_Weapon( gentity_t *ent, gentity_t *other ) {
 	int weapon;
 
 	weapon = ent->item->giTag;
+
+	//if ( g_gametype.integer == GT_SURVIVAL ) {
+		//other->client->ps.persistant[PERS_SCORE] += G_GetWeaponPrice( weapon );
+		//return RESPAWN_SP;
+	//}
 
 	if ( ent->count < 0 ) {
 		quantity = 0; // None for you, sir!
@@ -797,9 +820,19 @@ void Touch_Item( gentity_t *ent, gentity_t *other, trace_t *trace ) {
 	switch ( ent->item->giType ) {
 	case IT_WEAPON:
 		respawn = Pickup_Weapon( ent, other );
+		
+		if ( g_gametype.integer == GT_SURVIVAL) {
+			ent->wait = -1;
+		}
+
 		break;
 	case IT_AMMO:
 		respawn = Pickup_Ammo( ent, other );
+
+		if ( g_gametype.integer == GT_SURVIVAL) {
+			ent->wait = -1;
+		}
+
 		break;
 	case IT_ARMOR:
 		respawn = Pickup_Armor( ent, other );
@@ -965,10 +998,14 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 
 	dropped->classname = item->classname;
 	dropped->item = item;
-//	VectorSet (dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS);
-//	VectorSet (dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS);
-	VectorSet( dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, 0 );            //----(SA)	so items sit on the ground
-	VectorSet( dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, 2 * ITEM_RADIUS );  //----(SA)	so items sit on the ground
+    
+	if (item->giType == IT_POWERUP) {
+		VectorSet( dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS );
+		VectorSet( dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS );
+	} else {
+	   VectorSet( dropped->r.mins, -ITEM_RADIUS, -ITEM_RADIUS, 0 );            //----(SA)	so items sit on the ground
+	   VectorSet( dropped->r.maxs, ITEM_RADIUS, ITEM_RADIUS, 2 * ITEM_RADIUS );  //----(SA)	so items sit on the ground
+	}
 	dropped->r.contents = CONTENTS_TRIGGER | CONTENTS_ITEM;
 
 	dropped->touch = Touch_Item_Auto;
@@ -984,9 +1021,9 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 	dropped->physicsFlush = qtrue;
 
 	// (SA) TODO: FIXME: don't do this right now.  bug needs to be found.
-//	if(item->giType == IT_WEAPON)
-//		dropped->s.eFlags |= EF_SPINNING;	// spin the weapon as it flies from the dead player.  it will stop when it hits the ground
-
+	if(item->giType == IT_POWERUP) {
+		dropped->s.eFlags |= EF_SPINNING;	// spin the weapon as it flies from the dead player.  it will stop when it hits the ground
+	}
 
 	if ( item->giType == IT_TEAM ) { // Special case for CTF flags
 		dropped->think = Team_DroppedFlagThink;

@@ -45,9 +45,25 @@ Adds score to both the client and his team
 ============
 */
 void AddScore( gentity_t *ent, int score ) {
+	if ( !ent->client ) {
+		return;
+	}
+	// no scoring during pre-match warmup
+	if ( level.warmupTime ) {
+		return;
+	}
 
-	return;
-	
+	// Ridah, no scoring during single player
+	// DHM - Nerve :: fix typo
+	if ( g_gametype.integer != GT_SURVIVAL ) {
+		return;
+	}
+	// done.
+
+
+	ent->client->ps.persistant[PERS_SCORE] += score;
+
+	//CalculateRanks();
 }
 
 
@@ -147,12 +163,46 @@ void TossClientItems( gentity_t *self ) {
 		}
 	}
 
- // dropped items stay forever in SP
+        // dropped items stay forever in SP
 		if ( drop ) {
-			drop->nextthink = 0;
+	        if ( g_gametype.integer == GT_SURVIVAL ) {
+	           drop->nextthink = level.time + 100000;                                  
+		 }  else {
+			   drop->nextthink = 0;
 		}
 
 		angle = 45;
+
+   // Drop random powerup in survival mode
+    if (g_gametype.integer == GT_SURVIVAL && rand() % 100 < 10) {  // 10% chance 
+       int powerup = 0;
+       switch (rand() % 5) {  // Random number
+        case 0:
+            powerup = PW_HASTE_SURV;
+            break;
+        case 1:
+            powerup = PW_QUAD;
+            break;
+        case 2:
+            powerup = PW_INVIS;
+            break;
+        case 3:
+            powerup = PW_BATTLESUIT_SURV;
+            break;
+        case 4:
+            powerup = PW_VAMPIRE;
+            break;
+       }
+	item = BG_FindItemForPowerup(powerup);
+    if (item) {
+        drop = Drop_Item(self, item, 0, qfalse);
+        if (drop) {
+            drop->nextthink = level.time + 30000;  // Stay for 30 seconds
+			angle += 45;
+        }
+    }
+    }
+
 		for ( i = 1 ; i < PW_NUM_POWERUPS ; i++ ) {
 			if ( self->client->ps.powerups[ i ] > level.time ) {
 				item = BG_FindItemForPowerup( i );
@@ -170,6 +220,7 @@ void TossClientItems( gentity_t *self ) {
 			}
 		}
 	
+}
 }
 
 
@@ -1087,11 +1138,14 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// and protects 50% against all damage
 	if ( client && client->ps.powerups[PW_BATTLESUIT] ) {
 		G_AddEvent( targ, EV_POWERUP_BATTLESUIT, 0 );
-		/*if ( dflags & DAMAGE_RADIUS ) {
-			return;
-		}*/
 
 		damage *= 0.30;
+	}
+
+	if ( client && client->ps.powerups[PW_BATTLESUIT_SURV] ) {
+		G_AddEvent( targ, EV_POWERUP_BATTLESUIT_SURV, 0 );
+
+		damage *= 0.05;
 	}
 
 	// always give half damage if hurting self

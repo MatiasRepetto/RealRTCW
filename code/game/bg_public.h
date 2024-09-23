@@ -419,7 +419,9 @@ typedef enum {
 	PW_NONE,
 	PW_QUAD,
 	PW_BATTLESUIT,
+	PW_BATTLESUIT_SURV,
 	PW_HASTE,
+	PW_HASTE_SURV,
 	PW_INVIS,
 	PW_REGEN,
 	PW_FLIGHT,
@@ -428,6 +430,7 @@ typedef enum {
 	PW_REDFLAG,
 	PW_BLUEFLAG,
 	PW_BALL,
+	PW_VAMPIRE,
 	PW_NUM_POWERUPS
 } powerup_t;
 
@@ -757,6 +760,7 @@ typedef enum {
 	EV_VENOMFULL,
 	EV_BULLET,              // otherEntity is the shooter
 	EV_LOSE_HAT,            
+	EV_REATTACH_HAT,
 	EV_GIB_HEAD,            // only blow off the head
 	EV_PAIN,
 	EV_CROUCH_PAIN,
@@ -767,6 +771,7 @@ typedef enum {
 	EV_OBITUARY,
 	EV_POWERUP_QUAD,
 	EV_POWERUP_BATTLESUIT,
+	EV_POWERUP_BATTLESUIT_SURV,
 	EV_POWERUP_REGEN,
 	EV_GIB_PLAYER,          // gib a previously living player
 	EV_GIB_VAMPIRISM,
@@ -1012,6 +1017,9 @@ typedef enum {
 	WEAP_DROP2,
 	WEAP_SPRINTIN,
 	WEAP_SPRINTOUT,
+	WEAP_RELOAD1_FAST,
+	WEAP_RELOAD2_FAST,
+	WEAP_RELOAD3_FAST,
 	MAX_WP_ANIMATIONS
 } weapAnimNumber_t;
 

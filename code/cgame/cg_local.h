@@ -497,14 +497,14 @@ typedef struct localEntity_s {
 
 } localEntity_t;
 
-typedef struct delayedBrass_s {
+/*typedef struct delayedBrass_s {
 	struct centity_s *centity;
 	int time;
 	void ( *ejectBrassFunc )( centity_t * );
 	struct delayedBrass_s *prev;
 	struct delayedBrass_s *next;
 
-} delayedBrass_t;
+} delayedBrass_t;*/
 
 //======================================================================
 
@@ -714,7 +714,9 @@ typedef struct weaponInfo_s {
 	vec3_t missileDlightColor;
 	int missileRenderfx;
 
-	void ( *ejectBrassFunc )( centity_t *, int delay );
+	//void ( *ejectBrassFunc )( centity_t *, int delay );
+
+    void ( *ejectBrassFunc )( centity_t * );
 
 	float trailRadius;
 	float wiTrailTime;
@@ -723,8 +725,10 @@ typedef struct weaponInfo_s {
 	sfxHandle_t firingSound;
 	sfxHandle_t overheatSound;
 	sfxHandle_t reloadSound;
+	sfxHandle_t reloadSoundFast;
 	sfxHandle_t reloadFastSound;
 	sfxHandle_t	reloadFullSound;
+	sfxHandle_t	reloadFullSoundFast;
 	sfxHandle_t reloadSoundAi;
 	sfxHandle_t	bounceSound;
 	sfxHandle_t spinupSound;        //----(SA)	added // sound started when fire button goes down, and stepped on when the first fire event happens
@@ -1777,6 +1781,8 @@ extern vmCvar_t cg_zoomDefaultBinoc;
 extern vmCvar_t cg_zoomDefaultSniper;
 extern vmCvar_t cg_zoomDefaultFG;
 extern vmCvar_t cg_zoomDefaultSnooper;
+extern vmCvar_t cg_zoomSensitivity;
+extern vmCvar_t cg_zoomSensitivityFovScaled;
 extern vmCvar_t cg_zoomStepBinoc;
 extern vmCvar_t cg_zoomStepSniper;
 extern vmCvar_t cg_zoomStepSnooper;
@@ -2251,8 +2257,8 @@ void CG_FlameDamage( int owner, vec3_t org, float radius );
 void    CG_InitLocalEntities( void );
 localEntity_t   *CG_AllocLocalEntity( void );
 void    CG_AddLocalEntities( void );
-void    CG_FreeDelayedBrass( delayedBrass_t * );
-void    CG_AllocDelayedBrass( centity_t *, int, void ( *ejectBrassFunc )( centity_t * ) );
+//void    CG_FreeDelayedBrass( delayedBrass_t * );
+//void    CG_AllocDelayedBrass( centity_t *, int, void ( *ejectBrassFunc )( centity_t * ) );
 
 //
 // cg_effects.c

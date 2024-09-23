@@ -441,6 +441,9 @@ struct gentity_s {
 	// if working on a post release patch, new variables should ONLY be inserted after this point
 
 	int canSpeak;               // can this entity speak?
+	int price;                 // item price, survival mode
+    char  *buy_item;
+	int isWeapon;               
 };
 
 // Ridah
@@ -955,6 +958,7 @@ int TeamCount( int ignoreClientNum, team_t team );
 team_t PickTeam( int ignoreClientNum );
 void SetClientViewAngle( gentity_t *ent, vec3_t angle );
 gentity_t *SelectSpawnPoint( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
+gentity_t *SelectSpawnPoint_AI( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
 void ClientRespawn(gentity_t *ent);
 void BeginIntermission( void );
 void InitBodyQue( void );

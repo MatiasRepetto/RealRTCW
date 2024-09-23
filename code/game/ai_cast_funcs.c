@@ -77,6 +77,12 @@ char *AIFunc_Battle( cast_state_t *cs );
 
 static bot_moveresult_t *moveresult;
 
+// Survival mode
+int activeAI[NUM_CHARACTERS];
+int survivalKillCount;
+int maxActiveAI[NUM_CHARACTERS];
+
+
 /*
 ============
 AIFunc_Restore()
@@ -346,6 +352,195 @@ float AICast_SpeedScaleForDistance( cast_state_t *cs, float startdist, float ide
 			return 1.0;
 		}
 	}
+}
+
+void AICast_IncreaseMaxActiveAI() {
+
+    // Increase maxActiveAI for AICHAR_SOLDIER based on survivalKillCount
+    if (survivalKillCount % 10 == 0) {
+        maxActiveAI[AICHAR_SOLDIER] += 1;
+    }
+
+    // Clamp maxActiveAI for AICHAR_SOLDIER to a maximum value
+    if (maxActiveAI[AICHAR_SOLDIER] > 10) {
+        maxActiveAI[AICHAR_SOLDIER] = 10;
+    }
+
+    if (survivalKillCount % 20 == 0) {
+        maxActiveAI[AICHAR_ELITEGUARD] += 2;
+    }
+
+    if (maxActiveAI[AICHAR_ELITEGUARD] > 4) {
+        maxActiveAI[AICHAR_ELITEGUARD] = 4;
+    }
+
+    if (survivalKillCount % 30 == 0) {
+        maxActiveAI[AICHAR_BLACKGUARD] += 2;
+    }
+
+    if (maxActiveAI[AICHAR_BLACKGUARD] > 4) {
+        maxActiveAI[AICHAR_BLACKGUARD] = 4;
+    }
+
+    if (survivalKillCount % 40 == 0) {
+        maxActiveAI[AICHAR_VENOM] += 2;
+    }
+
+    if (maxActiveAI[AICHAR_VENOM] > 4) {
+        maxActiveAI[AICHAR_VENOM] = 2;
+    }
+}
+
+/*
+============
+AICast_SurvivalRespawn
+============
+*/
+void AICast_SurvivalRespawn(gentity_t *ent, cast_state_t *cs) {
+
+   vec3_t mins, maxs;
+   int touch[10], numTouch;
+   float oldmaxZ;
+   int i;
+   gentity_t *player;
+   vec3_t spawn_origin, spawn_angles;
+
+			if ( ent->aiCharacter != AICHAR_ZOMBIE && ent->aiCharacter != AICHAR_HELGA
+				 && ent->aiCharacter != AICHAR_HEINRICH ) {
+
+				for ( i = 0 ; i < g_maxclients.integer ; i++ ) {
+					player = &g_entities[i];
+
+					if ( !player || !player->inuse ) {
+						continue;
+					}
+
+					if ( player->r.svFlags & SVF_CASTAI ) {
+						continue;
+					}
+				}
+			}
+
+
+			//cs->rebirthTime = level.time + 5000 + rand() % 2000;
+
+
+			oldmaxZ = ent->r.maxs[2];
+
+			// make sure the area is clear
+			AIChar_SetBBox( ent, cs, qfalse );
+
+			VectorAdd( ent->r.currentOrigin, ent->r.mins, mins );
+			VectorAdd( ent->r.currentOrigin, ent->r.maxs, maxs );
+			trap_UnlinkEntity( ent );
+
+			numTouch = trap_EntitiesInBox( mins, maxs, touch, 10 );
+
+			if ( numTouch ) {
+				for ( i = 0; i < numTouch; i++ ) {
+					if ( g_entities[touch[i]].r.contents & MASK_PLAYERSOLID ) {
+						break;
+					}
+				}
+				if ( i == numTouch ) {
+					numTouch = 0;
+				}
+			}
+
+			
+			if ( numTouch == 0 ) {    // ok to spawn
+
+				// give them health when they start reviving, so we won't gib after
+				// just a couple shots while reviving
+				
+
+
+			int increase = survivalKillCount / 10;  // Calculate increase based on survivalKillCount
+
+            switch (cs->aiCharacter) {
+            case AICHAR_SOLDIER:
+                cs->attributes[STARTING_HEALTH] = 30 + increase;  // Increase starting_health for AICHAR_SOLDIER
+                if (cs->attributes[STARTING_HEALTH] > 50) {  // Cap health for AICHAR_SOLDIER
+                cs->attributes[STARTING_HEALTH] = 50;
+                }
+                break;
+            case AICHAR_ELITEGUARD:
+               cs->attributes[STARTING_HEALTH] = 35 + increase;  // Increase starting_health for AICHAR_ELITEGUARD
+               if (cs->attributes[STARTING_HEALTH] > 70) {  // Cap health for AICHAR_ELITEGUARD
+               cs->attributes[STARTING_HEALTH] = 70;
+               }
+               break;
+            case AICHAR_BLACKGUARD:
+               cs->attributes[STARTING_HEALTH] = 50 + increase;  // Increase starting_health for AICHAR_BLACKGUARD
+               if (cs->attributes[STARTING_HEALTH] > 80) {  // Cap health for AICHAR_BLACKGUARD
+               cs->attributes[STARTING_HEALTH] = 80;
+               }
+               break;
+            case AICHAR_VENOM:
+                cs->attributes[STARTING_HEALTH] = 80 + increase;  // Increase starting_health for AICHAR_VENOM
+                if (cs->attributes[STARTING_HEALTH] > 150) {  // Cap health for AICHAR_VENOM
+                cs->attributes[STARTING_HEALTH] = 150;
+               }
+               break;
+            default:
+               cs->attributes[STARTING_HEALTH] = 30 + increase;  // Increase default starting_health
+               if (cs->attributes[STARTING_HEALTH] > 60) {  // Cap default health
+               cs->attributes[STARTING_HEALTH] = 60;
+               }
+              break;
+}
+
+
+              // Set health
+              ent->health = ent->client->ps.stats[STAT_HEALTH] = ent->client->ps.stats[STAT_MAX_HEALTH] = cs->attributes[STARTING_HEALTH]; 
+
+				ent->r.contents = CONTENTS_BODY;
+				ent->clipmask = MASK_PLAYERSOLID | CONTENTS_MONSTERCLIP;
+				ent->takedamage = qtrue;
+				ent->waterlevel = 0;
+				ent->watertype = 0;
+				ent->flags = 0;
+				ent->die = AICast_Die;
+				ent->client->ps.eFlags &= ~EF_DEAD;
+				ent->s.eFlags &= ~EF_DEAD;
+
+                // Selecting the spawn point for the AI
+				SelectSpawnPoint_AI( ent->client->ps.origin, spawn_origin, spawn_angles );
+				G_SetOrigin( ent, spawn_origin );
+				VectorCopy( spawn_origin, ent->client->ps.origin );
+				SetClientViewAngle( ent, spawn_angles );
+
+				// Activate respawn scripts for AI
+				AICast_ScriptEvent(cs, "respawn", "");
+                
+				// Turn off Headshot flag and reattach hat
+				ent->client->ps.eFlags &= ~EF_HEADSHOT;
+				G_AddEvent( ent, EV_REATTACH_HAT, 0 );
+
+				cs->rebirthTime = 0;
+				cs->deathTime = 0;
+
+				ent->client->ps.eFlags &= ~EF_DEATH_FRAME;
+				ent->client->ps.eFlags &= ~EF_FORCE_END_FRAME;
+				ent->client->ps.eFlags |= EF_NO_TURN_ANIM;
+
+				// play the revive animation
+				cs->revivingTime = level.time + BG_AnimScriptEvent( &ent->client->ps, ANIM_ET_REVIVE, qfalse, qtrue );
+
+				AICast_StateChange( cs, AISTATE_RELAXED );
+				cs->enemyNum = -1;
+				
+				// Increment the counter for active AI characters
+                //activeAI[ent->aiCharacter]++;
+
+			} else {
+				// can't spawn yet, so set bbox back, and wait
+				ent->r.maxs[2] = oldmaxZ;
+				ent->client->ps.maxs[2] = ent->r.maxs[2];
+			}
+			trap_LinkEntity( ent );
+
+
 }
 
 /*

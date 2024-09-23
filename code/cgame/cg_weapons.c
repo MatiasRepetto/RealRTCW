@@ -267,9 +267,9 @@ static void CG_MachineGunEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-static void CG_MachineGunEjectBrassDelay( centity_t *cent, int delay ) {
+/*static void CG_MachineGunEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_MachineGunEjectBrass );
-}
+}*/
 
 /*
 ==============
@@ -456,9 +456,9 @@ static void CG_ShotgunEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-static void  CG_ShotgunEjectBrassDelay( centity_t *cent, int delay ) {
+/*static void  CG_ShotgunEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_ShotgunEjectBrass );
-}
+}*/
 
 /*
 ==============
@@ -645,9 +645,9 @@ static void CG_PistolEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-static void CG_PistolEjectBrassDelay( centity_t *cent, int delay ) {
+/*static void CG_PistolEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_PistolEjectBrass );
-}
+}*/
 
 //----(SA)	added
 /*
@@ -741,9 +741,9 @@ static void CG_PanzerFaustEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-static void CG_PanzerFaustEjectBrassDelay( centity_t *cent, int delay ) {
+/*static void CG_PanzerFaustEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_PanzerFaustEjectBrass );
-}
+}*/
 
 /*
 ==============
@@ -1468,6 +1468,8 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 	int i = 0;
 
 	weaponInfo->reloadFullSound = 0;
+	weaponInfo->reloadFullSoundFast = 0;
+	weaponInfo->reloadSoundFast = 0;
 	weaponInfo->reloadSoundAi = 0;
 	weaponInfo->flashSoundAi[i] = 0;
 
@@ -1603,11 +1605,23 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 			} else {
 				weaponInfo->reloadSound = trap_S_RegisterSound( filename );
 			}
+		} else if ( !Q_stricmp( token.string, "reloadSoundFast" ) ) {
+			if ( !PC_String_ParseNoAlloc( handle, filename, sizeof( filename ) ) ) {
+				return CG_RW_ParseError( handle, "expected reloadSound filename" );
+			} else {
+				weaponInfo->reloadSoundFast = trap_S_RegisterSound( filename );
+			}
 		} else if ( !Q_stricmp( token.string, "reloadFullSound" ) ) {
 			if ( !PC_String_ParseNoAlloc( handle, filename, sizeof( filename ) ) ) {
 				return CG_RW_ParseError( handle, "expected reloadFullSound filename" );
 			} else {
 				weaponInfo->reloadFullSound = trap_S_RegisterSound( filename );
+			}
+		} else if ( !Q_stricmp( token.string, "reloadFullSoundFast" ) ) {
+			if ( !PC_String_ParseNoAlloc( handle, filename, sizeof( filename ) ) ) {
+				return CG_RW_ParseError( handle, "expected reloadFullSound filename" );
+			} else {
+				weaponInfo->reloadFullSoundFast = trap_S_RegisterSound( filename );
 			}
 		} else if ( !Q_stricmp( token.string, "reloadSoundAi" ) ) {
 			if ( !PC_String_ParseNoAlloc( handle, filename, sizeof( filename ) ) ) {
@@ -1707,13 +1721,13 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 				return CG_RW_ParseError( handle, "expected ejectBrassFunc" );
 			} else {
 				if ( !Q_stricmp( filename, "MachineGunEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_MachineGunEjectBrassDelay;
+					weaponInfo->ejectBrassFunc = CG_MachineGunEjectBrass;
 				} else if ( !Q_stricmp( filename, "PanzerFaustEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_PanzerFaustEjectBrassDelay;
+					weaponInfo->ejectBrassFunc = CG_PanzerFaustEjectBrass;
 				} else if ( !Q_stricmp( filename, "PistolEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_PistolEjectBrassDelay;
+					weaponInfo->ejectBrassFunc = CG_PistolEjectBrass;
 				} else if ( !Q_stricmp( filename, "ShotgunEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_ShotgunEjectBrassDelay;
+					weaponInfo->ejectBrassFunc = CG_ShotgunEjectBrass;
 				}
 			}
 		} else if ( !Q_stricmp( token.string, "modModel" ) ) {
@@ -1736,6 +1750,15 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
     // If reloadFullSound is not set, use reloadSound
     if (weaponInfo->reloadFullSound == 0) {
         weaponInfo->reloadFullSound = weaponInfo->reloadSound;
+    }
+
+
+	if (weaponInfo->reloadFullSoundFast == 0) {
+        weaponInfo->reloadFullSoundFast = weaponInfo->reloadSoundFast;
+    }
+
+	if (weaponInfo->reloadSoundFast == 0) {
+        weaponInfo->reloadSoundFast = weaponInfo->reloadSound;
     }
 
 	if (weaponInfo->reloadSoundAi == 0) {
@@ -1827,11 +1850,11 @@ void CG_RegisterWeapon( int weaponNum, qboolean force ) {
      
 	if ( cg_vanilla_guns.integer ) {
      	if ( !CG_RegisterWeaponFromWeaponFile( va( "weapons/vanilla/%s", filename ), weaponInfo, weaponNum ) ) {
-		CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
+		//CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
 	}
 	} else {
 	    if ( !CG_RegisterWeaponFromWeaponFile( va( "weapons/%s", filename ), weaponInfo, weaponNum ) ) {
-		CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
+		//CG_Printf( S_COLOR_RED "WARNING: failed to register media for weapon %i from %s\n", weaponNum, filename );
 	}
 	}
 
@@ -2384,10 +2407,10 @@ static void CG_AddWeaponWithPowerups( refEntity_t *gun, int powerups, playerStat
 	} else {
 		trap_R_AddRefEntityToScene( gun );
 
-		/*if ( powerups & ( 1 << PW_BATTLESUIT ) ) {
+		if ( powerups & ( 1 << PW_BATTLESUIT_SURV ) ) {
 			gun->customShader = cgs.media.battleWeaponShader;
 			trap_R_AddRefEntityToScene( gun );
-		}*/
+		}
 		if ( powerups & ( 1 << PW_QUAD ) ) {
 			gun->customShader = cgs.media.quadWeaponShader;
 			trap_R_AddRefEntityToScene( gun );
@@ -3162,7 +3185,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		CG_AddWeaponWithPowerups( &gun, cent->currentState.powerups, ps, cent );
 	}
 
-	if ( isPlayer && ps != NULL ) {
+	if ( isPlayer ) {
 		refEntity_t brass;
 
 		// opposite tag in akimbo, since at this point the weapon
@@ -5520,19 +5543,23 @@ void CG_FireWeapon( centity_t *cent, int event ) {
 		}
 	}
 
-	if (cent->currentState.aiChar) {
-		return;
+		if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
+		weap->ejectBrassFunc( cent );
 	}
+
+	//if (cent->currentState.aiChar) {
+		//return;
+//	}
 
 
 	// do brass ejection with special delays for some weapons
-	if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
+	/*if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
 		   if (cg.predictedPlayerState.ammoclip[cent->currentState.weapon] == 0) {
 			   weap->ejectBrassFunc( cent, ammoTable[cent->currentState.weapon].brassDelayEmpty );
 		   } else {
 			   weap->ejectBrassFunc( cent, ammoTable[cent->currentState.weapon].brassDelay );
 		   }
-	    }
+	    }*/
 }
 
 
