@@ -84,6 +84,18 @@ void Use_Target_buy( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
     price = ent->price;
     itemName = ent->buy_item;
 
+	// Define the list of random box weapons
+    char *random_box_weapons[] = {"weapon_luger", "weapon_revolver", "weapon_colt", "weapon_tt33", "weapon_mauserrifle", "weapon_mosin", "weapon_m1garand", "weapon_mp44", "weapon_fg42", "weapon_g43", "weapon_mp40", "weapon_mp34", "weapon_sten", "weapon_ppsh", "weapon_thompson"}; 
+
+	int slotId = G_GetFreeWeaponSlot( activator );
+
+	if ( slotId <= 0 ) {
+		slotId = G_FindWeaponSlot( activator, activator->client->ps.weapon );
+		if ( slotId <= 0 ) {
+			slotId = 1;
+		}
+	}
+
     // Check if weapon or price were not specified
     if ( !itemName || price <= 0 ) {
         return;
@@ -93,7 +105,15 @@ void Use_Target_buy( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
         return;
     }
 
-    // Find the item
+	// If itemName is "random_weapon", select a random weapon from the list
+	if (strcmp(itemName, "random_weapon") == 0)
+	{
+		int numWeapons = sizeof(random_box_weapons) / sizeof(random_box_weapons[0]); // Get the number of weapons in the list
+		int randomIndex = rand() % numWeapons;				   // Generate a random index
+		itemName = random_box_weapons[randomIndex];					   // Select a random weapon
+	}
+
+	// Find the item
     itemIndex = 0;
     for ( i = 1; bg_itemlist[i].classname; i++ ) {
         if ( !Q_strcasecmp( itemName, bg_itemlist[i].classname ) ) {
@@ -110,10 +130,15 @@ void Use_Target_buy( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
         return;  // Player doesn't have enough points, return without giving anything
     }
 
-    // Subtract price from player's score
-    activator->client->ps.persistant[PERS_SCORE] -= price;
-
     if ( item->giType == IT_WEAPON ) {
+
+		if ( activator->client->ps.weaponSlots[ slotId ] != WP_NONE ) {
+            // Take the weapon from the player
+		    COM_BitClear(activator->client->ps.weapons, activator->client->ps.weaponSlots[ slotId ]);
+
+			// now pickup the other one
+			activator->client->dropWeaponTime = level.time;
+		}
 
         // Check if player already has the weapon
         if (COM_BitCheck(activator->client->ps.weapons, item->giTag)) {
@@ -122,6 +147,7 @@ void Use_Target_buy( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
         } else {
             // Player doesn't have the weapon, give it to them
             COM_BitSet( activator->client->ps.weapons, item->giTag );
+			activator->client->ps.weaponSlots[ slotId ] = item->giTag;
         }
 
         // Check if player's ammo is already full
@@ -135,12 +161,69 @@ void Use_Target_buy( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
         // Select the bought weapon
         G_AddPredictableEvent( activator, EV_ITEM_PICKUP, BG_FindItemForWeapon( item->giTag ) - bg_itemlist );
 
+	// all grenades should be IT_AMMO
+    } else if ( item->giType == IT_AMMO ) {
+		// Check if player's ammo is already full
+		// ammoclip for grenades
+        if ( activator->client->ps.ammoclip[ item->giTag ] >= ammoTable[ item->giTag ].maxammo ) {
+            return;  // Player's ammo is already full, return without adding ammo
+        }
+
+        // Check if player already has the weapon
+        if ( COM_BitCheck( activator->client->ps.weapons, item->giTag ) ) {
+            // Player already has the weapon, give ammo instead and halve the price
+            price /= 2;
+        }
+
+        // Set the ammo of the bought weapon to the "maxammo" from the ammo table
+        Add_Ammo( activator, item->giTag, ammoTable[ item->giTag ].maxammo, qtrue );
+
+        // Select the bought weapon
+        G_AddPredictableEvent( activator, EV_ITEM_PICKUP, BG_FindItemForWeapon( item->giTag ) - bg_itemlist );
+
     } else if ( item->giType == IT_ARMOR )  {
+       if (activator->client->ps.stats[STAT_ARMOR] >= 100) {
+		  trap_SendServerCommand( -1, "mu_play sound/items/use_nothing.wav 0\n" );
+          return;
+       }
 		activator->client->ps.stats[STAT_ARMOR] = 100;
         G_AddPredictableEvent( activator, EV_ITEM_PICKUP, item - bg_itemlist );
-    } else {
+    } else if ( item->giType == IT_PERK ) {
+
+		int i, perkCount = 0;
+
+		// Count the number of perks the player already has
+		for (i = 0; i < MAX_PERKS; i++)
+		{
+			if (activator->client->ps.perks[i] > 0)
+			{
+				perkCount++;
+			}
+		}
+
+		// If the player already has 3 perks, don't allow them to buy more
+		if (perkCount >= 3)
+		{
+			trap_SendServerCommand(-1, "mu_play sound/items/use_nothing.wav 0\n");
+			return;
+		}
+
+		if (activator->client->ps.perks[item->giTag] > 0) {
+        // The player already has the perk, so don't give it to them again
+		trap_SendServerCommand( -1, "mu_play sound/items/use_nothing.wav 0\n" );
+        return;
+        }
+
+	   activator->client->ps.perks[item->giTag] += 1;
+	   activator->client->ps.stats[STAT_PERK] |= ( 1 << item->giTag );
+       G_AddPredictableEvent( activator, EV_ITEM_PICKUP, item - bg_itemlist );
+	} else {
 		return;
 	}
+
+	// Subtract price from player's score
+    activator->client->ps.persistant[PERS_SCORE] -= price;
+	trap_SendServerCommand( -1, "mu_play sound/misc/buy.wav 0\n" );
 }
 
 void SP_target_buy( gentity_t *ent ) {

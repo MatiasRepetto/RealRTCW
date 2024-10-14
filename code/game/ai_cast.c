@@ -489,7 +489,12 @@ void AICast_Init( void ) {
 
     // Initial count of AIs for survival mode
     if ( g_gametype.integer == GT_SURVIVAL )  {
-	    maxActiveAI[AICHAR_SOLDIER] = 4;
+		killCountRequirement = 5;
+		maxActiveAI[AICHAR_SOLDIER] = 5;
+	    maxActiveAI[AICHAR_ZOMBIE_SURV] = 5;
+	    maxActiveAI[AICHAR_ZOMBIE_GHOST] = 0;
+	    maxActiveAI[AICHAR_WARZOMBIE] = 0;
+	    maxActiveAI[AICHAR_PRIEST] = 0;
 	    maxActiveAI[AICHAR_ELITEGUARD] = 0;
 		maxActiveAI[AICHAR_BLACKGUARD] = 0;
 		maxActiveAI[AICHAR_VENOM] = 0;
@@ -603,6 +608,8 @@ void AIChar_AIScript_AlertEntity( gentity_t *ent ) {
 	cast_state_t    *cs;
 	vec3_t spawn_origin, spawn_angles;
 
+	gentity_t *player = AICast_FindEntityForName( "player" );
+
 	if ( !ent->aiInactive ) {
 		return;
 	}
@@ -645,7 +652,7 @@ void AIChar_AIScript_AlertEntity( gentity_t *ent ) {
 
 	// Selecting the spawn point for the AI
     if ( g_gametype.integer == GT_SURVIVAL )  {
-				SelectSpawnPoint_AI( ent->client->ps.origin, spawn_origin, spawn_angles );
+				SelectSpawnPoint_AI( player, spawn_origin, spawn_angles );
 				G_SetOrigin( ent, spawn_origin );
 				VectorCopy( spawn_origin, ent->client->ps.origin );
 				SetClientViewAngle( ent, spawn_angles );

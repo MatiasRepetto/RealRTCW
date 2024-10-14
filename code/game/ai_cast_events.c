@@ -125,7 +125,7 @@ void AICast_Pain( gentity_t *targ, gentity_t *attacker, int damage, vec3_t point
 
 	if ( g_gametype.integer == GT_SURVIVAL && killerPlayer ) {
 
-	      attacker->client->ps.persistant[PERS_SCORE] += 10;
+	      attacker->client->ps.persistant[PERS_SCORE] += 1;
 	}
 
 	// process the event (turn to face the attacking direction? go into hide/retreat state?)
@@ -266,21 +266,26 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	}
 
     if (g_gametype.integer == GT_SURVIVAL && killerPlayer) {
-        int score = 50;  // Default score
+
+
+    int score = 5;  // Default score
 
     // Add score based on aiCharacter type
     switch (attacker->aiCharacter) {
         case AICHAR_SOLDIER:
-            score += 10;
+		case AICHAR_ZOMBIE:
+            score += 0;
             break;
         case AICHAR_ELITEGUARD:
-            score += 10;
+		case AICHAR_WARZOMBIE:
+            score += 2;
             break;
         case AICHAR_BLACKGUARD:
-            score += 20;
+            score += 5;
             break;
         case AICHAR_VENOM:
-            score += 40;
+		case AICHAR_PRIEST:
+            score += 7;
             break;
         default:
             break;
@@ -288,11 +293,12 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
     // Add additional score if killed with knife
     if (modKnife) {
-        score += 100;
+        score += 15;
     }
 
 
     attacker->client->ps.persistant[PERS_SCORE] += score;
+	attacker->client->ps.persistant[PERS_KILLS]++;
     }
 
 
@@ -382,7 +388,7 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	}
 
 	// Zombies are very fragile against highly explosives
-	if ( self->aiCharacter == AICHAR_ZOMBIE && damage > 20 && inflictor != attacker ) {
+	if ( (self->aiCharacter == AICHAR_ZOMBIE || self->aiCharacter == AICHAR_ZOMBIE_SURV || self->aiCharacter == AICHAR_ZOMBIE_GHOST ) && damage > 20 && inflictor != attacker ) {
 		self->health = -999;
 		damage = 999;
 	}
@@ -420,7 +426,10 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 		// if client is in a nodrop area, don't drop anything
 		contents = trap_PointContents( self->r.currentOrigin, -1 );
 		if ( !( contents & CONTENTS_NODROP ) ) {
-			TossClientItems( self );
+			TossClientWeapons( self );
+			if (g_gametype.integer == GT_SURVIVAL) {
+			TossClientPowerups( self, attacker );
+			}
 		}
 
 		// make sure the client doesn't forget about this entity until it's set to "dead" frame
@@ -595,9 +604,9 @@ void AICast_Die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 
 	// Decrement the counter for active AI characters
 	if ( g_gametype.integer == GT_SURVIVAL )  {
-       //activeAI[self->aiCharacter]--;
 	   survivalKillCount++;
-	   AICast_IncreaseMaxActiveAI();
+	   waveKillCount++;
+	   AICast_CheckSurvivalProgression( attacker );
 	}
 
 	// kill, instanly, any streaming sound the character had going

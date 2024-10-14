@@ -2775,6 +2775,12 @@ static void CG_PlayerPowerups( centity_t *cent ) {
 		trap_R_AddLightToScene( cent->lerpOrigin, 200 + ( rand() & 31 ), 0.2, 0.2, 1, 0 );
 	}
 
+	// vampire gives a red light
+	if ( powerups & ( 1 << PW_VAMPIRE ) ) {
+		trap_R_AddLightToScene( cent->lerpOrigin, 200 + ( rand() & 31 ), 1.0, 0.0, 0.0, 0 );
+	}
+
+
 	// flight plays a looped sound
 //	if ( powerups & ( 1 << PW_FLIGHT ) ) {
 //		CG_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, cgs.media.flightSound, 255 );
@@ -3175,7 +3181,7 @@ void CG_AddZombieSpiritEffect( centity_t *cent ) {
 
 	static int lastSpiritRelease;
 
-	if ( cent->currentState.aiChar != AICHAR_ZOMBIE ) {
+	if ( cent->currentState.aiChar != AICHAR_ZOMBIE && cent->currentState.aiChar != AICHAR_ZOMBIE_SURV && cent->currentState.aiChar != AICHAR_ZOMBIE_GHOST) {
 		return;
 	}
 
@@ -3483,7 +3489,7 @@ void CG_AddZombieFlameEffect( centity_t *cent ) {
 
 	// qboolean active=qfalse; // TTimo: unused
 
-	if ( cent->currentState.aiChar != AICHAR_ZOMBIE ) {
+	if ( cent->currentState.aiChar != AICHAR_ZOMBIE && cent->currentState.aiChar != AICHAR_ZOMBIE_SURV && cent->currentState.aiChar != AICHAR_ZOMBIE_GHOST ) {
 		return;
 	}
 
@@ -3562,7 +3568,7 @@ CG_AddZombieFlameEffect
 void CG_AddZombieFlameShort( centity_t *cent ) {
 	vec3_t morg, maxis[3], mang;
 
-	if ( cent->currentState.aiChar != AICHAR_ZOMBIE ) {
+	if ( cent->currentState.aiChar != AICHAR_ZOMBIE && cent->currentState.aiChar != AICHAR_ZOMBIE_SURV && cent->currentState.aiChar != AICHAR_ZOMBIE_GHOST ) {
 		return;
 	}
 
@@ -4380,6 +4386,13 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, int powerups, int team, enti
 			}
 			trap_R_AddRefEntityToScene( ent );
 		}
+
+		if ( powerups & ( 1 << PW_VAMPIRE ) ) {
+
+			ent->customShader = cgs.media.redQuadShader;
+			
+			trap_R_AddRefEntityToScene( ent );
+		}
 		if ( powerups & ( 1 << PW_REGEN ) ) {
 			if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
 				ent->customShader = cgs.media.regenShader;
@@ -4405,7 +4418,7 @@ void CG_AddRefEntityWithPowerups( refEntity_t *ent, int powerups, int team, enti
 		}
 	}
 	// Flaming zombie always shows a little fire
-	if ( !es->time2 && alpha < 1.0 && ( cent->currentState.aiChar == AICHAR_ZOMBIE ) && IS_FLAMING_ZOMBIE( cent->currentState ) /*&& !(cent->currentState.eFlags & EF_DEAD)*/ ) {
+	if ( !es->time2 && alpha < 1.0 && ( cent->currentState.aiChar == AICHAR_ZOMBIE || cent->currentState.aiChar == AICHAR_ZOMBIE_SURV || cent->currentState.aiChar == AICHAR_ZOMBIE_GHOST ) && IS_FLAMING_ZOMBIE( cent->currentState ) /*&& !(cent->currentState.eFlags & EF_DEAD)*/ ) {
 		onFire = qtrue;
 		// set the alpha
 		alpha = 1.0;
@@ -4888,6 +4901,8 @@ void CG_Player( centity_t *cent ) {
 
 				switch ( cent->currentState.aiChar ) {
 				case AICHAR_ZOMBIE:
+				case AICHAR_ZOMBIE_SURV:
+				case AICHAR_ZOMBIE_GHOST:
 				case AICHAR_LOPER:
 				case AICHAR_DOG:
 				case AICHAR_XSHEPHERD:

@@ -633,7 +633,7 @@ void heal_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
 		return;
 	}
 
-	if (other->client->ps.persistant[PERS_SCORE] < 200) {
+	if (other->client->ps.persistant[PERS_SCORE] < 20) {
         return;
     }
 
@@ -651,7 +651,7 @@ void heal_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
 		G_AddPredictableEvent( other, EV_ITEM_PICKUP, BG_FindItemForClassName( "item_health_wall" ) - bg_itemlist );
 
 			if ( g_gametype.integer == GT_SURVIVAL )  {
-			    other->client->ps.persistant[PERS_SCORE] -= 200;
+			    other->client->ps.persistant[PERS_SCORE] -= 20;
 			}
 
 		if ( self->health != -9999 ) {
@@ -819,7 +819,7 @@ void ammo_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
 	}
 
 	if (g_gametype.integer == GT_SURVIVAL) {
-        if (other->client->ps.persistant[PERS_SCORE] < 200) {
+        if (other->client->ps.persistant[PERS_SCORE] < 20) {
              return;
         }
     }
@@ -834,7 +834,7 @@ void ammo_touch( gentity_t *self, gentity_t *other, trace_t *trace ) {
 			// add the cell event (to get sound, etc.)
 			G_AddPredictableEvent( touchClients[i], EV_ITEM_PICKUP, BG_FindItem( "Ammo Pack" ) - bg_itemlist );
 			if ( g_gametype.integer == GT_SURVIVAL )  {
-			    other->client->ps.persistant[PERS_SCORE] -= 200;
+			    other->client->ps.persistant[PERS_SCORE] -= 20;
 			}
 			if ( self->health != -9999 ) {
 				// reduce the ammount of available ammo by the added clip number
@@ -1285,9 +1285,9 @@ void Touch_objective_info( gentity_t *ent, gentity_t *other, trace_t *trace ) {
 
     if ( price && weaponName ) {
 		if (isWeapon) {
-        trap_SendServerCommand( other - g_entities, va( "cp \"Weapon: %s\nPrice: %d\nAmmo Price: %d\"", weaponName, price, ammoPrice));
+        trap_SendServerCommand( other - g_entities, va( "cpbuy \"Weapon: %s\nPrice: %d\nAmmo Price: %d\"", weaponName, price, ammoPrice));
 		} else {
-		trap_SendServerCommand( other - g_entities, va( "cp \"Item: %s\nPrice: %d\"", weaponName, price));
+		trap_SendServerCommand( other - g_entities, va( "cpbuy \"Item: %s\nPrice: %d\"", weaponName, price));
 		}
     } else if ( other->timestamp <= level.time ) {
         other->timestamp = level.time + 4500;

@@ -267,9 +267,9 @@ static void CG_MachineGunEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-/*static void CG_MachineGunEjectBrassDelay( centity_t *cent, int delay ) {
+static void CG_MachineGunEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_MachineGunEjectBrass );
-}*/
+}
 
 /*
 ==============
@@ -456,9 +456,9 @@ static void CG_ShotgunEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-/*static void  CG_ShotgunEjectBrassDelay( centity_t *cent, int delay ) {
+static void  CG_ShotgunEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_ShotgunEjectBrass );
-}*/
+}
 
 /*
 ==============
@@ -645,9 +645,9 @@ static void CG_PistolEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-/*static void CG_PistolEjectBrassDelay( centity_t *cent, int delay ) {
+static void CG_PistolEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_PistolEjectBrass );
-}*/
+}
 
 //----(SA)	added
 /*
@@ -741,9 +741,9 @@ static void CG_PanzerFaustEjectBrass( centity_t *cent ) {
 	le->leMarkType = LEMT_NONE;
 }
 
-/*static void CG_PanzerFaustEjectBrassDelay( centity_t *cent, int delay ) {
+static void CG_PanzerFaustEjectBrassDelay( centity_t *cent, int delay ) {
 	CG_AllocDelayedBrass( cent, cg.time + delay, CG_PanzerFaustEjectBrass );
-}*/
+}
 
 /*
 ==============
@@ -1721,13 +1721,13 @@ static qboolean CG_RW_ParseClient( int handle, weaponInfo_t *weaponInfo, int wea
 				return CG_RW_ParseError( handle, "expected ejectBrassFunc" );
 			} else {
 				if ( !Q_stricmp( filename, "MachineGunEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_MachineGunEjectBrass;
+					weaponInfo->ejectBrassFunc = CG_MachineGunEjectBrassDelay;
 				} else if ( !Q_stricmp( filename, "PanzerFaustEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_PanzerFaustEjectBrass;
+					weaponInfo->ejectBrassFunc = CG_PanzerFaustEjectBrassDelay;
 				} else if ( !Q_stricmp( filename, "PistolEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_PistolEjectBrass;
+					weaponInfo->ejectBrassFunc = CG_PistolEjectBrassDelay;
 				} else if ( !Q_stricmp( filename, "ShotgunEjectBrass" ) ) {
-					weaponInfo->ejectBrassFunc = CG_ShotgunEjectBrass;
+					weaponInfo->ejectBrassFunc = CG_ShotgunEjectBrassDelay;
 				}
 			}
 		} else if ( !Q_stricmp( token.string, "modModel" ) ) {
@@ -2381,6 +2381,8 @@ qboolean CG_DrawRealWeapons( centity_t *cent ) {
 	case AICHAR_SUPERSOLDIER_LAB:   
 	case AICHAR_PROTOSOLDIER:
 	case AICHAR_ZOMBIE:
+	case AICHAR_ZOMBIE_SURV:
+	case AICHAR_ZOMBIE_GHOST:
 	case AICHAR_HELGA:      //----(SA)	added	// boss1 is now helga-blob
 	case AICHAR_WARZOMBIE:
 	case AICHAR_DOG:
@@ -2413,6 +2415,10 @@ static void CG_AddWeaponWithPowerups( refEntity_t *gun, int powerups, playerStat
 		}
 		if ( powerups & ( 1 << PW_QUAD ) ) {
 			gun->customShader = cgs.media.quadWeaponShader;
+			trap_R_AddRefEntityToScene( gun );
+		}
+		if ( powerups & ( 1 << PW_VAMPIRE ) ) {
+			gun->customShader = cgs.media.redQuadShader;
 			trap_R_AddRefEntityToScene( gun );
 		}
 	}
@@ -3185,7 +3191,7 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		CG_AddWeaponWithPowerups( &gun, cent->currentState.powerups, ps, cent );
 	}
 
-	if ( isPlayer ) {
+	if ( isPlayer && ps != NULL ) {
 		refEntity_t brass;
 
 		// opposite tag in akimbo, since at this point the weapon
@@ -3996,7 +4002,8 @@ static qboolean CG_WeaponSelectable( int i ) {
 		return qfalse;
 	}
 
-	if ( !CG_WeaponHasAmmo( i ) ) {
+	if (!CG_WeaponHasAmmo(i) && (cg_newinventory.integer <= 0 && cg_gameType.integer != GT_SURVIVAL))
+	{
 		return qfalse;
 	}
 
@@ -5543,23 +5550,18 @@ void CG_FireWeapon( centity_t *cent, int event ) {
 		}
 	}
 
-		if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
-		weap->ejectBrassFunc( cent );
+	if (cent->currentState.aiChar) {
+		return;
 	}
 
-	//if (cent->currentState.aiChar) {
-		//return;
-//	}
-
-
 	// do brass ejection with special delays for some weapons
-	/*if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
+	if ( weap->ejectBrassFunc && cg_brassTime.integer > 0 ) {
 		   if (cg.predictedPlayerState.ammoclip[cent->currentState.weapon] == 0) {
 			   weap->ejectBrassFunc( cent, ammoTable[cent->currentState.weapon].brassDelayEmpty );
 		   } else {
 			   weap->ejectBrassFunc( cent, ammoTable[cent->currentState.weapon].brassDelay );
 		   }
-	    }*/
+	    }
 }
 
 
