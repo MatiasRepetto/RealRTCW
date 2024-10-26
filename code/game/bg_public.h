@@ -433,6 +433,7 @@ typedef enum {
 	PW_BLUEFLAG,
 	PW_BALL,
 	PW_VAMPIRE,
+	PW_AMMO,
 	PW_NUM_POWERUPS
 } powerup_t;
 
@@ -469,6 +470,8 @@ typedef enum {
 	PERK_SCAVENGER,
 	PERK_RUNNER,
 	PERK_WEAPONHANDLING,
+	PERK_RIFLING,
+	PERK_SECONDCHANCE,
 	NUM_PERKS
 } perk_t;
 

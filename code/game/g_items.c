@@ -114,6 +114,11 @@ int Pickup_Powerup( gentity_t *ent, gentity_t *other ) {
 			other->client->ps.powerups[PW_NOFATIGUE] = 60000;
 		}
 	}
+
+    if (ent->item->giTag == PW_AMMO) {
+         Add_Ammo( other, other->client->ps.weapon, ammoTable[other->client->ps.weapon].maxammo, qtrue );
+    }
+
    
 
     // DIRTY HACK!!!!! If the invisibility powerup is picked up, set FL_NOTARGET and start a timer to remove it
@@ -1374,7 +1379,16 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 	dropped->touch = Touch_Item_Auto;
 
 	G_SetOrigin( dropped, origin );
-	dropped->s.pos.trType = TR_GRAVITY;
+
+	if (item->giType == IT_POWERUP)
+	{
+		dropped->s.pos.trType = TR_GRAVITY_PAUSED;
+	}
+	else
+	{
+		dropped->s.pos.trType = TR_GRAVITY;
+	}
+
 	dropped->s.pos.trTime = level.time;
 	VectorCopy( velocity, dropped->s.pos.trDelta );
 
@@ -1388,10 +1402,10 @@ gentity_t *LaunchItem( gitem_t *item, vec3_t origin, vec3_t velocity ) {
 	{
 		dropped->s.eFlags |= EF_SPINNING; // spin the weapon as it flies from the dead player.  it will stop when it hits the ground
 		// Add dynamic light to the dropped powerup
-		dropped->s.constantLight = 150;			 // RGB intensity
-		dropped->s.constantLight |= (255 << 8);	 // R
-		dropped->s.constantLight |= (223 << 16); // G
-		dropped->s.constantLight |= (0 << 24);	 // B
+		//dropped->s.constantLight = 50;	
+		//dropped->s.constantLight |= (255 << 8);	 
+		//dropped->s.constantLight |= (255 << 16); 
+		//dropped->s.constantLight |= (255 << 24);	
 
 		// Play a sound at the location of the dropped item
 		dropped->s.loopSound = G_SoundIndex("sound/misc/powerup_ambience.wav");
