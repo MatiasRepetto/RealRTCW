@@ -33,6 +33,8 @@ If you have questions concerning this license or the applicable additional terms
  *
 */
 
+#include <stdlib.h> // For rand()
+#include <stdio.h>  // For snprintf()
 
 #include "g_local.h"
 #include "../qcommon/q_shared.h"
@@ -100,6 +102,17 @@ int waveV = 10;
 
 int waveWarz = 3;
 int waveGhosts = 6;
+
+int zombieHealthCap = 300;
+int warriorHealthCap = 350;
+int ghostHealthCap = 300;
+int priestHealthCap = 500;
+
+int soldierHealthCap = 100;	
+int eliteGuardHealthCap = 150;
+int blackGuardHealthCap = 200;
+int venomHealthCap = 300;
+
 
 
 /*
@@ -382,6 +395,11 @@ void AICast_CheckSurvivalProgression( gentity_t *attacker ) {
 		attacker->client->ps.persistant[PERS_WAVES]++;
 		waveKillCount = 0;
 
+		int randomIndex = rand() % 19 + 1;
+		static char command[256];
+		snprintf(command, sizeof(command), "mu_play sound/announcer/hein%d.wav 0\n", randomIndex);
+		trap_SendServerCommand(-1, command);
+
    // Normal soldiers
     maxActiveAI[AICHAR_SOLDIER] += 1;
     if (maxActiveAI[AICHAR_SOLDIER] > maxSoldiers) {
@@ -508,8 +526,8 @@ void AICast_SurvivalRespawn(gentity_t *ent, cast_state_t *cs) {
 				
 
 
-			int health_increase = waveCount;
-			float speed_increase = waveCount / 20;
+			int health_increase = waveCount * 5;
+			float speed_increase = waveCount / 5;
 		    float crouchSpeedScale = 1;
 			float runSpeedScale = 1;
 			float sprintSpeedScale = 1;
@@ -520,13 +538,13 @@ void AICast_SurvivalRespawn(gentity_t *ent, cast_state_t *cs) {
 			{
 			case AICHAR_SOLDIER:
 				newHealth = 30 + health_increase;
-				if (newHealth > 60) {
-					newHealth = 60;
+				if (newHealth > soldierHealthCap) {
+					newHealth = soldierHealthCap;
 				}
 			case AICHAR_ZOMBIE_SURV:
 				newHealth = 40 + health_increase;
-				if (newHealth > 300) {
-					newHealth = 300;
+				if (newHealth > zombieHealthCap) {
+					newHealth = zombieHealthCap;
 				}
 				runSpeedScale = 0.8 + speed_increase;
 				if (runSpeedScale > 1.2) {
@@ -543,8 +561,8 @@ void AICast_SurvivalRespawn(gentity_t *ent, cast_state_t *cs) {
 				break;
 			case AICHAR_ZOMBIE_GHOST:
 				newHealth = 40 + health_increase;
-				if (newHealth > 300) {
-					newHealth = 300;
+				if (newHealth > ghostHealthCap) {
+					newHealth = ghostHealthCap;
 				}
 				runSpeedScale = 0.8 + speed_increase;
 				if (runSpeedScale > 1.6) {
@@ -561,8 +579,8 @@ void AICast_SurvivalRespawn(gentity_t *ent, cast_state_t *cs) {
 				break;
 			case AICHAR_WARZOMBIE:
 				newHealth = 60 + health_increase;
-				if (newHealth > 350) {
-					newHealth = 350;
+				if (newHealth > warriorHealthCap) {
+					newHealth = warriorHealthCap;
 				}
 				runSpeedScale = 0.8 + speed_increase;
 				if (runSpeedScale > 1.6) {
@@ -597,20 +615,20 @@ void AICast_SurvivalRespawn(gentity_t *ent, cast_state_t *cs) {
 				break;
 			case AICHAR_ELITEGUARD:
 				newHealth = 35 + health_increase;
-				if (newHealth > 80) {
-					newHealth = 80;
+				if (newHealth > eliteGuardHealthCap) {
+					newHealth = eliteGuardHealthCap;
 				}
 				break;
 			case AICHAR_BLACKGUARD:
 			    newHealth = 50 + health_increase;
-				if (newHealth > 100) {
-					newHealth = 100;
+				if (newHealth > blackGuardHealthCap) {
+					newHealth = blackGuardHealthCap;
 				}
 				break;
 			case AICHAR_VENOM:
 			    newHealth = 80 + health_increase;
-				if (newHealth > 160) {
-					newHealth = 160;
+				if (newHealth > venomHealthCap) {
+					newHealth = venomHealthCap;
 				}
 				break;
 			default:
